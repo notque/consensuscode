@@ -1,0 +1,18 @@
+id: proposal-2025-07-27-001
+title: Expand Collective with Code Quality Specialist Agents
+description: ""
+proposer: cli-user
+date: 2025-07-27T12:23:17.702443-07:00
+status: consultation
+urgency: medium
+affected_areas: []
+consensus_status: Active consultation in progress
+consensus_history:
+    - timestamp: 2025-07-27T12:23:17.702443-07:00
+      event: proposal_created
+      actor: cli-user
+      details: 'Created with urgency: medium'
+    - timestamp: 2025-07-27T12:23:26.909161-07:00
+      event: status_changed
+      actor: cli-user
+      details: Status changed from proposed to consultation

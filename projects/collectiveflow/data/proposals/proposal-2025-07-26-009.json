@@ -1,0 +1,29 @@
+{
+  "id": "proposal-2025-07-26-009",
+  "title": "User Advocacy and Requirements Framework for Client Work",
+  "description": "Product-steward proposal for maintaining user-centered development while serving paying clients in hierarchical organizations",
+  "proposer": "cli-user",
+  "date": "2025-07-26T11:03:30.471053-07:00",
+  "status": "consultation",
+  "urgency": "medium",
+  "affected_areas": [
+    "client-work",
+    "requirements-gathering",
+    "user-advocacy"
+  ],
+  "consensus_status": "Active consultation in progress",
+  "consensus_history": [
+    {
+      "timestamp": "2025-07-26T11:03:30.471053-07:00",
+      "event": "proposal_created",
+      "actor": "cli-user",
+      "details": "Created with urgency: medium"
+    },
+    {
+      "timestamp": "2025-07-26T12:19:25.666922-07:00",
+      "event": "status_changed",
+      "actor": "cli-user",
+      "details": "Status changed from proposed to consultation"
+    }
+  ]
+}

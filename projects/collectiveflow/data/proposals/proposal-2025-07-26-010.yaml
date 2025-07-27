@@ -1,0 +1,21 @@
+id: proposal-2025-07-26-010
+title: Market Positioning for Horizontal Software Consulting
+description: Strategic framework for positioning our collective in the consulting market while maintaining horizontal principles
+proposer: cli-user
+date: 2025-07-26T11:08:55.323357-07:00
+status: consultation
+urgency: medium
+affected_areas:
+    - business-development
+    - marketing
+    - client-engagement
+consensus_status: Active consultation in progress
+consensus_history:
+    - timestamp: 2025-07-26T11:08:55.323357-07:00
+      event: proposal_created
+      actor: cli-user
+      details: 'Created with urgency: medium'
+    - timestamp: 2025-07-26T12:19:20.415655-07:00
+      event: status_changed
+      actor: cli-user
+      details: Status changed from proposed to consultation

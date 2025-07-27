@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CollectiveFlow - Horizontal Consensus System{% endblock %}</title>
+    
+    <!-- Tailwind CSS for quick, accessible styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom styles for collective branding -->
+    <style>
+        /* No hierarchical styling - all elements are equal */
+        .collective-card {
+            @apply bg-white rounded-lg shadow-md p-6 mb-4 border border-gray-200;
+        }
+        
+        .collective-badge {
+            @apply inline-block px-3 py-1 rounded-full text-sm font-medium;
+        }
+        
+        /* Horizontal navigation - no dropdown menus or hierarchy */
+        .nav-link {
+            @apply text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header: Simple, horizontal navigation -->
+    <header class="bg-white shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-gray-900">
+                            🤝 CollectiveFlow
+                        </h1>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/" class="nav-link">Proposals</a>
+                        <a href="/collective" class="nav-link">Collective</a>
+                        <span class="nav-link text-gray-400">No Login Required</span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm text-gray-500">
+                        A Horizontal Consensus System
+                    </span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer: Collective principles reminder -->
+    <footer class="bg-white mt-12">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-sm text-gray-500">
+                <p class="mb-2">
+                    This system operates on horizontal principles: 
+                    <strong>No hierarchy</strong> • 
+                    <strong>No special roles</strong> • 
+                    <strong>Consensus-based decisions</strong>
+                </p>
+                <p>
+                    Every member of the collective has equal voice and access.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Optional JavaScript for enhanced interactions -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

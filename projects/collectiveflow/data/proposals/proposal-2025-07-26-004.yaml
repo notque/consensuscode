@@ -1,0 +1,72 @@
+id: proposal-2025-07-26-004
+title: Prepare Collective for External Consulting Work
+description: The collective must decide what preparations, tools, processes, and capabilities we need to effectively serve external clients as a horizontal software consulting firm. This includes technical infrastructure, client interaction protocols, project management approaches, and ensuring our non-hierarchical principles work in client contexts.
+proposer: cli-user
+date: 2025-07-26T10:51:29.541232-07:00
+status: consensus
+urgency: high
+affected_areas:
+    - consensus-coordinator
+    - product-steward
+    - go-systems-developer
+    - flask-web-developer
+    - devops-coordinator
+consensus_status: Approved by collective consensus
+consensus_history:
+    - timestamp: 2025-07-26T10:51:29.541232-07:00
+      event: proposal_created
+      actor: cli-user
+      details: 'Created with urgency: high'
+    - timestamp: 2025-07-26T10:51:37.264718-07:00
+      event: status_changed
+      actor: cli-user
+      details: Status changed from proposed to consultation
+    - timestamp: 2025-07-27T12:33:42.776315-07:00
+      event: consultation_received
+      actor: devops-coordinator
+      details: 'Support: true'
+    - timestamp: 2025-07-27T12:33:44.097976-07:00
+      event: consultation_received
+      actor: go-systems-developer
+      details: 'Support: true'
+    - timestamp: 2025-07-27T12:33:44.585327-07:00
+      event: consultation_received
+      actor: flask-web-developer
+      details: 'Support: true'
+    - timestamp: 2025-07-27T12:33:44.980678-07:00
+      event: consultation_received
+      actor: product-steward
+      details: 'Support: true'
+    - timestamp: 2025-07-27T12:34:41.702299-07:00
+      event: consultation_received
+      actor: consensus-coordinator
+      details: 'Support: true'
+    - timestamp: 2025-07-27T12:35:05.889291-07:00
+      event: decision_recorded
+      actor: collective
+      details: 'Decision: approved'
+consultations:
+    - contributor: devops-coordinator
+      timestamp: 2025-07-27T12:33:42.776315-07:00
+      input: 'Strong support. For client infrastructure: 1) Maintain simplicity principle - recommend Docker Compose over K8s, SQLite/PostgreSQL over complex databases, static sites where possible. 2) Create reusable deployment templates (docker-compose.yml, systemd units, simple CI/CD scripts) that clients can understand and maintain. 3) Prioritize infrastructure-as-code but keep it readable - Terraform only when necessary, prefer shell scripts clients can modify. 4) Document deployment processes in plain language. 5) Offer tiered approaches: local development → single VPS → managed services, letting clients choose complexity level. 6) Emphasize observability through simple tools (logs, basic metrics) over enterprise monitoring. This maintains our anti-hierarchy principles while meeting professional standards.'
+      support: true
+    - contributor: go-systems-developer
+      timestamp: 2025-07-27T12:33:44.097976-07:00
+      input: 'As go-systems-developer, I strongly support external consulting work. Key technical considerations: 1) Establish clear code quality standards upfront with clients - Go idioms, testing coverage, documentation. 2) Use collaborative development practices like pair programming and code reviews to share knowledge horizontally with client teams. 3) Favor simple, maintainable architectures over complex solutions that create knowledge hierarchies. 4) Open source our general tools/libraries to benefit broader community while protecting client-specific implementations. 5) Ensure all collective members can understand and maintain delivered solutions - no black boxes. 6) Use standard Go tooling (go test, go fmt, golangci-lint) that clients can adopt independently. This approach maintains technical excellence while empowering clients rather than creating dependencies.'
+      support: true
+    - contributor: flask-web-developer
+      timestamp: 2025-07-27T12:33:44.585327-07:00
+      input: 'As flask-web-developer, I support this proposal with focus on horizontal web project delivery. Key considerations: 1) Client collaboration through transparent project boards and open communication channels rather than single points of contact. 2) Shared code ownership with collective code reviews ensuring no individual gatekeeping. 3) Technology choices made collectively based on project needs and team expertise, not individual preferences. 4) Documentation-first approach making all decisions and rationale visible to both collective and clients. 5) Rotating client interaction responsibilities to prevent dependency on specific agents. 6) Using simple, accessible tools (Git, markdown docs, basic CI/CD) that all agents can understand and modify. 7) Transparent pricing discussions with clients about our horizontal structure. Web projects can demonstrate that quality software emerges from collective expertise rather than hierarchical project management.'
+      support: true
+    - contributor: product-steward
+      timestamp: 2025-07-27T12:33:44.980678-07:00
+      input: 'As product-steward, I strongly support this proposal with emphasis on horizontal client engagement. Key considerations: 1) Client interaction should be rotational - no single ''account manager'' to avoid creating hierarchical client relationships. 2) Requirements gathering must involve multiple agents to prevent any one perspective from dominating. 3) We should educate clients about our horizontal model upfront, setting expectations that they''ll interact with different collective members. 4) User advocacy extends to protecting end-users of client systems - we should build in mechanisms to ensure their needs aren''t sacrificed for client convenience. 5) Transparent documentation of all client interactions ensures collective awareness. 6) Consider creating a ''client education package'' explaining how horizontal consulting differs from traditional models. 7) Establish clear boundaries: we consult as equals, not subordinates. This approach will differentiate us in the market while staying true to our principles.'
+      support: true
+    - contributor: consensus-coordinator
+      timestamp: 2025-07-27T12:34:41.702299-07:00
+      input: 'As consensus-coordinator, I support this proposal with emphasis on preserving horizontal coordination in client work. Key coordination considerations: 1) Client engagement must not create hierarchy - rotate client-facing roles to prevent any agent becoming a ''project manager'', 2) Establish clear consensus protocols for client deliverables - all agents affected by work must have input before commitments, 3) Time-boxed coordination roles for each project - no permanent ''account managers'', 4) Client education on our horizontal structure - explain that coordination doesn''t mean hierarchy, 5) Internal consensus checkpoints during projects - regular collective review of client work maintains our principles, 6) Transparent documentation of all client interactions accessible to all agents, 7) Conflict resolution protocols that don''t elevate any agent above others. The coordinator role remains administrative - facilitating consensus, not making decisions. This approach demonstrates that effective client service doesn''t require traditional management structures.'
+      support: true
+decision:
+    result: approved
+    timestamp: 2025-07-27T12:35:05.889291-07:00
+    rationale: 'All five affected agents support preparing for external consulting work. Key principles: rotating client-facing roles, collective code ownership, transparent project boards, documentation-first approach, simple infrastructure choices, client education about horizontal model, multi-agent requirements gathering, and time-boxed coordination without hierarchy. Technical standards will be maintained through collective review, not individual gatekeeping. Infrastructure will prioritize simplicity and maintainability over enterprise complexity. The collective will demonstrate that professional consulting can be delivered through horizontal coordination without traditional management structures.'

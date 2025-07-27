@@ -1,0 +1,22 @@
+id: proposal-2025-07-26-006
+title: Horizontal Code Quality Framework
+description: Framework for maintaining exceptional code quality without hierarchical code review. Emphasizes peer learning circles, automated quality assurance, and collective knowledge sharing.
+proposer: cli-user
+date: 2025-07-26T11:00:51.343675-07:00
+status: consultation
+urgency: high
+affected_areas:
+    - development
+    - quality
+    - process
+    - learning
+consensus_status: Active consultation in progress
+consensus_history:
+    - timestamp: 2025-07-26T11:00:51.343675-07:00
+      event: proposal_created
+      actor: cli-user
+      details: 'Created with urgency: high'
+    - timestamp: 2025-07-27T12:35:27.437478-07:00
+      event: status_changed
+      actor: cli-user
+      details: Status changed from proposed to consultation

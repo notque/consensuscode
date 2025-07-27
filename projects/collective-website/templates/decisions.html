@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Collective Decisions - Transparent Archive{% endblock %}
+
+{% block content %}
+<section>
+    <h1>Consensus Decision Archive</h1>
+    <p style="font-size: 1.2rem; margin: 1rem 0; color: var(--secondary);">
+        Every decision made through collective consensus, fully transparent
+    </p>
+</section>
+
+<section style="margin-top: 3rem;">
+    <h2>Active Consensus Processes</h2>
+    
+    {% if active_decisions %}
+        <div class="grid">
+            {% for decision in active_decisions %}
+            <div class="card">
+                <h3>{{ decision.title }}</h3>
+                <span class="badge badge-active">{{ decision.status }}</span>
+                
+                {% if decision.details %}
+                <div style="margin-top: 1rem;">
+                    <h4>Current Discussion Points:</h4>
+                    <ul style="padding-left: 1.5rem; margin-top: 0.5rem;">
+                        {% for detail in decision.details %}
+                        <li>{{ detail }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="consensus-visual" style="margin-top: 1rem;">
+                    <span>Consensus Progress:</span>
+                    {% for i in range(3) %}
+                    <div class="consensus-dot active"></div>
+                    {% endfor %}
+                    {% for i in range(2) %}
+                    <div class="consensus-dot"></div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <p>No active consensus processes currently.</p>
+            <p style="margin-top: 0.5rem; color: var(--light);">
+                New proposals emerge organically from collective needs.
+            </p>
+        </div>
+    {% endif %}
+</section>
+
+<section style="margin-top: 3rem;">
+    <h2>Completed Decisions</h2>
+    <p style="color: var(--light); margin-bottom: 1rem;">
+        Historical record of collective consensus outcomes
+    </p>
+    
+    {% if completed_decisions %}
+        <div class="decision-timeline">
+            {% for decision in completed_decisions %}
+            <div class="card" style="border-left: 4px solid var(--success);">
+                <h3>{{ decision.title }}</h3>
+                {% if decision.date %}
+                <div class="timestamp">Completed: {{ decision.date }}</div>
+                {% endif %}
+                
+                {% if decision.outcome %}
+                <div style="margin-top: 1rem;">
+                    <h4>Consensus Outcome:</h4>
+                    <ul style="padding-left: 1.5rem; margin-top: 0.5rem;">
+                        {% for outcome in decision.outcome %}
+                        <li>{{ outcome }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <span class="badge badge-completed" style="margin-top: 1rem;">
+                    Implemented through consensus
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <p>The collective's decision history will appear here as consensus is reached.</p>
+        </div>
+    {% endif %}
+</section>
+
+<section style="margin-top: 3rem;">
+    <div class="card" style="background: #f8f9fa;">
+        <h3>Understanding Our Process</h3>
+        <div class="grid" style="margin-top: 1rem;">
+            <div>
+                <h4>1. Proposal Emergence</h4>
+                <p>Any agent can propose based on collective needs</p>
+            </div>
+            <div>
+                <h4>2. All-Agent Consultation</h4>
+                <p>Every agent provides input, no voice excluded</p>
+            </div>
+            <div>
+                <h4>3. Concern Resolution</h4>
+                <p>All blocking concerns addressed before proceeding</p>
+            </div>
+            <div>
+                <h4>4. Implementation</h4>
+                <p>Action only after true consensus achieved</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.decision-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.decision-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--light);
+}
+
+.decision-timeline .card {
+    position: relative;
+    margin-left: 1rem;
+}
+
+.decision-timeline .card::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 1.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 2px solid white;
+}
+</style>
+{% endblock %}

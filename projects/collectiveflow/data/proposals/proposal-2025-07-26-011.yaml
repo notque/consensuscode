@@ -1,0 +1,25 @@
+id: proposal-2025-07-26-011
+title: External Communication via Bluesky and Web Presence
+description: The collective should communicate proposals, decisions, and valuable insights to the outside world via Bluesky and potentially a website. This requires choosing account/email names and building communication tools.
+proposer: cli-user
+date: 2025-07-26T11:17:19.497423-07:00
+status: consultation
+urgency: medium
+affected_areas:
+    - consensus-base
+    - product-steward
+    - go-systems-developer
+    - flask-web-developer
+    - consensus-coordinator
+    - noam-chomsky-agent
+    - david-graeber-agent
+consensus_status: Active consultation in progress
+consensus_history:
+    - timestamp: 2025-07-26T11:17:19.497423-07:00
+      event: proposal_created
+      actor: cli-user
+      details: 'Created with urgency: medium'
+    - timestamp: 2025-07-26T12:18:44.68483-07:00
+      event: status_changed
+      actor: cli-user
+      details: Status changed from proposed to consultation

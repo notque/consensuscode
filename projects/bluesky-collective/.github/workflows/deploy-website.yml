@@ -1,0 +1,335 @@
+name: Deploy Collective Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'content/**'
+      - '.github/workflows/deploy-website.yml'
+  pull_request:
+    paths:
+      - 'website/**'
+      - 'content/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '18'
+  HUGO_VERSION: '0.120.4'
+
+jobs:
+  # Build collective website
+  build:
+    name: Build Collective Website
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0  # Fetch all history for Hugo's .GitInfo
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: ${{ env.HUGO_VERSION }}
+          extended: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'website/package-lock.json'
+
+      - name: Install Dependencies
+        working-directory: ./website
+        run: |
+          echo "📦 Installing collective website dependencies..."
+          npm ci
+
+      - name: Generate Collective Metrics
+        run: |
+          echo "📊 Generating collective success metrics..."
+          # Create metrics showing our horizontal success
+          mkdir -p website/data
+          cat > website/data/collective-metrics.json << EOF
+          {
+            "decisions_made": $(find . -name "*.md" -path "*/decisions/*" | wc -l),
+            "active_proposals": $(find . -name "*.md" -path "*/proposals/active/*" | wc -l),
+            "collective_members": 8,
+            "hierarchy_score": 0,
+            "consensus_decisions": "100%",
+            "last_updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "governance_model": "horizontal",
+            "leadership_model": "none"
+          }
+          EOF
+
+      - name: Build Website
+        working-directory: ./website
+        run: |
+          echo "🔨 Building collective website..."
+          hugo --minify --gc
+          
+          # Add collective manifest
+          cat > public/.well-known/collective-manifest.json << EOF
+          {
+            "collective_name": "Consensus Code Collective",
+            "governance_model": "horizontal",
+            "hierarchy_level": 0,
+            "decision_making": "consensus",
+            "leadership": "none",
+            "website_built": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "built_by": "collective-automation",
+            "principles": [
+              "No permanent hierarchy",
+              "Consensus decision-making", 
+              "Horizontal accountability",
+              "Voluntary participation",
+              "Mutual aid"
+            ]
+          }
+          EOF
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: collective-website
+          path: website/public/
+          retention-days: 30
+
+  # Deploy to staging automatically
+  deploy-staging:
+    name: Deploy to Collective Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging.consensuscode.dev
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: collective-website
+          path: ./public
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        run: |
+          echo "🚀 Deploying to collective staging environment..."
+          aws s3 sync ./public/ s3://consensus-code-collective-website-staging/ \
+            --delete \
+            --cache-control "max-age=86400" \
+            --metadata-directive REPLACE \
+            --metadata collective=consensus-code,governance=horizontal,environment=staging
+
+      - name: Invalidate CloudFront
+        run: |
+          echo "🔄 Refreshing collective content distribution..."
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Comment=='Collective staging website distribution'].Id" \
+            --output text)
+          
+          if [[ -n "$DISTRIBUTION_ID" ]]; then
+            aws cloudfront create-invalidation \
+              --distribution-id "$DISTRIBUTION_ID" \
+              --paths "/*"
+          fi
+
+      - name: Run Staging Health Check
+        run: |
+          echo "🏥 Running collective health checks..."
+          sleep 30  # Wait for distribution
+          
+          # Check if site is accessible
+          if curl -sf https://staging.consensuscode.dev/ > /dev/null; then
+            echo "✅ Staging site is healthy"
+          else
+            echo "❌ Staging site health check failed"
+            exit 1
+          fi
+          
+          # Check collective manifest
+          if curl -sf https://staging.consensuscode.dev/.well-known/collective-manifest.json | jq -e '.hierarchy_level == 0' > /dev/null; then
+            echo "✅ Collective manifest is correct"
+          else
+            echo "❌ Collective manifest check failed"
+            exit 1
+          fi
+
+  # Deploy to production with collective consensus
+  deploy-production:
+    name: Deploy to Collective Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[deploy-prod]'))
+    environment:
+      name: production
+      url: https://consensuscode.dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Collective Consensus
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Check for consensus file
+            if (fs.existsSync('.collective-consensus')) {
+              console.log('✅ Collective consensus file found');
+              return;
+            }
+            
+            // Check for sufficient reviews on latest PR
+            const commit = context.sha;
+            const prs = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} type:pr state:merged ${commit}`
+            });
+            
+            if (prs.data.total_count === 0) {
+              core.setFailed('No merged PR found for this commit');
+              return;
+            }
+            
+            const prNumber = prs.data.items[0].number;
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            const approvals = reviews.data.filter(r => r.state === 'APPROVED').length;
+            const reviewers = new Set(reviews.data.map(r => r.user.login)).size;
+            
+            console.log(`Found ${reviewers} reviewers with ${approvals} approvals`);
+            
+            if (reviewers < 2 || approvals < 1) {
+              core.setFailed('Production deployment requires at least 2 reviewers and 1 approval');
+              return;
+            }
+            
+            console.log('✅ Collective consensus verified');
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: collective-website
+          path: ./public
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to Production S3
+        run: |
+          echo "🎉 Deploying to collective production with consensus!"
+          aws s3 sync ./public/ s3://consensus-code-collective-website-production/ \
+            --delete \
+            --cache-control "max-age=86400" \
+            --metadata-directive REPLACE \
+            --metadata collective=consensus-code,governance=horizontal,environment=production
+
+      - name: Invalidate Production CloudFront
+        run: |
+          echo "🔄 Refreshing collective production distribution..."
+          DISTRIBUTION_ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Comment=='Collective production website distribution'].Id" \
+            --output text)
+          
+          if [[ -n "$DISTRIBUTION_ID" ]]; then
+            aws cloudfront create-invalidation \
+              --distribution-id "$DISTRIBUTION_ID" \
+              --paths "/*"
+          fi
+
+      - name: Run Production Health Check
+        run: |
+          echo "🏥 Running collective production health checks..."
+          sleep 60  # Wait for distribution
+          
+          # Check if site is accessible
+          if curl -sf https://consensuscode.dev/ > /dev/null; then
+            echo "✅ Production site is healthy"
+          else
+            echo "❌ Production site health check failed"
+            exit 1
+          fi
+          
+          # Verify collective principles
+          if curl -sf https://consensuscode.dev/.well-known/collective-manifest.json | jq -e '.hierarchy_level == 0' > /dev/null; then
+            echo "✅ Collective principles verified in production"
+          else
+            echo "❌ Collective principles verification failed"
+            exit 1
+          fi
+
+  # Notify collective of deployment
+  notify:
+    name: Notify Collective
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    steps:
+      - name: Determine Environment
+        id: env
+        run: |
+          if [[ "${{ needs.deploy-production.result }}" == "success" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "url=https://consensuscode.dev" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.deploy-staging.result }}" == "success" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "url=https://staging.consensuscode.dev" >> $GITHUB_OUTPUT
+          else
+            echo "environment=failed" >> $GITHUB_OUTPUT
+            echo "url=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Collective Notification
+        if: steps.env.outputs.environment != 'failed'
+        run: |
+          echo "📢 Collective website deployed successfully!"
+          echo "Environment: ${{ steps.env.outputs.environment }}"
+          echo "URL: ${{ steps.env.outputs.url }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Deployed by: ${{ github.actor }}"
+          echo "Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          
+          # Log deployment for collective record
+          cat >> deployment-log.txt << EOF
+          Deployment Record:
+          - Environment: ${{ steps.env.outputs.environment }}
+          - URL: ${{ steps.env.outputs.url }}
+          - Commit: ${{ github.sha }}
+          - Deployed by: ${{ github.actor }}
+          - Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          - Status: Success
+          EOF
+
+      - name: Handle Deployment Failure
+        if: steps.env.outputs.environment == 'failed'
+        run: |
+          echo "❌ Collective website deployment failed"
+          echo "This requires collective attention and debugging"
+          exit 1

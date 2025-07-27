@@ -1,0 +1,72 @@
+/* Collective Voice - Additional Styles */
+
+/* Animation for live updates */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Enhanced consensus visualization */
+.consensus-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.consensus-bar {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.consensus-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--warning), var(--success));
+    transition: width 0.5s ease;
+}
+
+/* Voice bubble improvements */
+.voice-bubble.new {
+    border-left: 4px solid var(--accent);
+    animation: slideInLeft 0.5s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 480px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .nav-brand {
+        font-size: 1.25rem;
+    }
+    
+    .nav-links {
+        gap: 0.5rem;
+        font-size: 0.85rem;
+    }
+}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Collective Overview - CollectiveFlow{% endblock %}
+
+{% block content %}
+<div class="px-4 py-5 sm:px-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Collective Overview</h2>
+    
+    <!-- Collective Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="collective-card text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ stats.total_proposals }}</div>
+            <div class="text-sm text-gray-600 mt-1">Total Proposals</div>
+        </div>
+        
+        <div class="collective-card text-center">
+            <div class="text-3xl font-bold text-yellow-600">{{ stats.active_consultations }}</div>
+            <div class="text-sm text-gray-600 mt-1">Active Consultations</div>
+        </div>
+        
+        <div class="collective-card text-center">
+            <div class="text-3xl font-bold text-green-600">{{ stats.implemented }}</div>
+            <div class="text-sm text-gray-600 mt-1">Implemented</div>
+        </div>
+        
+        <div class="collective-card text-center">
+            <div class="text-3xl font-bold text-purple-600">{{ stats.contributor_count }}</div>
+            <div class="text-sm text-gray-600 mt-1">Contributors</div>
+        </div>
+    </div>
+
+    <!-- Collective Principles -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Our Collective Principles</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">🚫 No Permanent Hierarchy</h4>
+                <p class="text-sm text-gray-600">
+                    All coordination roles are temporary and revocable. No member has permanent authority over others.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">🤝 Consensus Decision-Making</h4>
+                <p class="text-sm text-gray-600">
+                    Collective decisions require input from all affected members through genuine consensus building.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">↔️ Horizontal Accountability</h4>
+                <p class="text-sm text-gray-600">
+                    Members coordinate through peer relationships based on mutual respect, not authority.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">✋ Voluntary Participation</h4>
+                <p class="text-sm text-gray-600">
+                    Members choose their level of engagement. Participation is encouraged but never mandatory.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Contributors -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Active Contributors</h3>
+        <p class="text-sm text-gray-600 mb-3">
+            All contributors are equal members of the collective. Listed alphabetically:
+        </p>
+        <div class="flex flex-wrap gap-2">
+            {% for contributor in stats.contributors | sort %}
+            <span class="collective-badge bg-gray-100 text-gray-700">
+                {{ contributor }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    {% if recent_events %}
+    <div class="collective-card">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Collective Activity</h3>
+        <div class="space-y-3">
+            {% for event in recent_events %}
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                    <span class="text-2xl">💡</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-900">
+                        <span class="font-medium">{{ event.actor }}</span>
+                        created proposal
+                        <a href="/proposal/{{ event.proposal_id }}" class="text-blue-600 hover:text-blue-800">
+                            "{{ event.proposal_title }}"
+                        </a>
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        {{ event.timestamp | humanize_date }}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- How to Participate -->
+    <div class="mt-8 p-6 bg-green-50 rounded-lg">
+        <h3 class="text-lg font-semibold text-green-900 mb-3">How to Participate</h3>
+        <div class="space-y-3 text-sm text-green-800">
+            <p>
+                <strong>1. View Proposals:</strong> Browse current proposals above or on the main page.
+                No authentication required - all information is transparent.
+            </p>
+            <p>
+                <strong>2. Submit Proposals:</strong> Use the CollectiveFlow CLI to create new proposals:
+                <code class="bg-green-100 px-2 py-1 rounded">./collectiveflow proposal create</code>
+            </p>
+            <p>
+                <strong>3. Provide Consultation:</strong> Share your input on active consultations:
+                <code class="bg-green-100 px-2 py-1 rounded">./collectiveflow consensus input [proposal-id]</code>
+            </p>
+            <p>
+                <strong>4. Build Consensus:</strong> Work together to address concerns and find agreement.
+                Every voice matters equally.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

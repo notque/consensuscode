@@ -1,0 +1,275 @@
+name: Collective CI/CD Pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: 'Environment to deploy to'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  GO_VERSION: '1.21'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Collective Review Check - Ensures horizontal participation
+  collective-review:
+    name: Collective Review Status
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      has_consensus: ${{ steps.check.outputs.has_consensus }}
+    steps:
+      - name: Check Collective Participation
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const reviews = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+            
+            // Count unique reviewers
+            const reviewers = new Set();
+            const approvals = new Set();
+            
+            reviews.data.forEach(review => {
+              if (review.state === 'APPROVED') {
+                approvals.add(review.user.login);
+              }
+              reviewers.add(review.user.login);
+            });
+            
+            // Check for minimum collective participation
+            const MIN_REVIEWERS = 2; // At least 2 collective members
+            const hasEnoughReviewers = reviewers.size >= MIN_REVIEWERS;
+            const hasApprovals = approvals.size > 0;
+            
+            console.log(`Reviewers: ${reviewers.size}, Approvals: ${approvals.size}`);
+            
+            // Set output
+            core.setOutput('has_consensus', hasEnoughReviewers && hasApprovals);
+            
+            // Add comment with status
+            if (!hasEnoughReviewers) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `🤝 **Collective Review Status**\n\nThis PR needs review from at least ${MIN_REVIEWERS} collective members.\nCurrent reviewers: ${reviewers.size}\n\nRemember: We operate horizontally - every voice matters!`
+              });
+            }
+
+  # Code Quality Checks - Automated, not authoritarian
+  quality-checks:
+    name: Horizontal Quality Assurance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+            
+      - name: Run Tests
+        run: |
+          echo "🧪 Running collective test suite..."
+          go test -v -race -coverprofile=coverage.out ./...
+          
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          
+      - name: Lint Code
+        run: |
+          echo "🔍 Running collective code standards check..."
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          golangci-lint run --timeout=5m
+          
+      - name: Security Scan
+        run: |
+          echo "🔒 Running collective security scan..."
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -fmt=json -out=security-report.json ./... || true
+          
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: security-report.json
+
+  # Build artifacts for collective use
+  build:
+    name: Build Collective Artifacts
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+          - os: darwin
+            arch: amd64
+          - os: darwin
+            arch: arm64
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          
+      - name: Build Binary
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          echo "🔨 Building for collective use on $GOOS/$GOARCH..."
+          output_name="bluesky-collective-$GOOS-$GOARCH"
+          if [ "$GOOS" = "windows" ]; then
+            output_name="${output_name}.exe"
+          fi
+          
+          go build -ldflags="-s -w -X main.version=${{ github.sha }}" \
+            -o "dist/$output_name" \
+            ./cmd/bluesky-collective
+            
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bluesky-collective-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/*
+
+  # Container image for collective deployment
+  container:
+    name: Build Collective Container
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Log in to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            
+      - name: Build and Push Container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ github.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+
+  # Deploy to staging - automatic for main branch
+  deploy-staging:
+    name: Deploy to Collective Staging
+    runs-on: ubuntu-latest
+    needs: [container]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging.bluesky.consensuscode.dev
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Deploy to Staging
+        run: |
+          echo "🚀 Deploying to collective staging environment..."
+          # Deployment logic here - could be kubectl, terraform, etc.
+          # Example: kubectl set image deployment/bluesky-collective bluesky-collective=${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:main-${{ github.sha }}
+
+  # Production deployment - requires collective consensus
+  deploy-production:
+    name: Deploy to Collective Production
+    runs-on: ubuntu-latest
+    needs: [collective-review, container]
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_environment == 'production') ||
+      (github.event_name == 'push' && contains(github.event.head_commit.message, '[deploy-prod]'))
+    environment:
+      name: production
+      url: https://bluesky.consensuscode.dev
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Verify Collective Consensus
+        if: needs.collective-review.outputs.has_consensus != 'true'
+        run: |
+          echo "❌ Production deployment requires collective consensus!"
+          echo "Please ensure the PR has been reviewed by multiple collective members."
+          exit 1
+          
+      - name: Deploy to Production
+        run: |
+          echo "🎉 Deploying to collective production with consensus!"
+          # Production deployment logic
+
+  # Notify collective of deployment status
+  notify-collective:
+    name: Notify Collective
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    steps:
+      - name: Send Collective Notification
+        run: |
+          echo "📢 Notifying collective of deployment status..."
+          # Could integrate with Slack, Discord, Matrix, etc.
+          # Or create a CollectiveFlow proposal for failed deployments

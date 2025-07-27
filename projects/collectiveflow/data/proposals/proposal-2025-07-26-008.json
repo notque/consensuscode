@@ -1,0 +1,23 @@
+{
+  "id": "proposal-2025-07-26-008",
+  "title": "Horizontal Project Management Infrastructure",
+  "description": "Project management tools embodying horizontal principles for coordinating complex client work. Proves excellent delivery without managers, hierarchies, or authoritarian control.",
+  "proposer": "cli-user",
+  "date": "2025-07-26T11:01:09.969673-07:00",
+  "status": "proposed",
+  "urgency": "medium",
+  "affected_areas": [
+    "project-management",
+    "tools",
+    "client-work",
+    "coordination"
+  ],
+  "consensus_history": [
+    {
+      "timestamp": "2025-07-26T11:01:09.969673-07:00",
+      "event": "proposal_created",
+      "actor": "cli-user",
+      "details": "Created with urgency: medium"
+    }
+  ]
+}

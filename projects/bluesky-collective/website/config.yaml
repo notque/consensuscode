@@ -1,0 +1,141 @@
+# Collective Website Configuration
+# Hugo static site generator for horizontal communication
+
+baseURL: "https://consensuscode.dev"
+languageCode: "en-us"
+title: "Consensus Code Collective"
+theme: "collective"
+
+# Collective parameters
+params:
+  description: "Horizontal software development proving hierarchy is obsolete"
+  subtitle: "A consensus-based software development collective"
+  
+  # Collective identity
+  collective_name: "Consensus Code Collective"
+  governance_model: "horizontal"
+  hierarchy_level: 0
+  decision_making: "consensus"
+  
+  # Collective members (no individual attribution)
+  collective_agents:
+    - "consensus-base"
+    - "product-steward"
+    - "go-systems-developer"
+    - "flask-web-developer"
+    - "devops-coordinator"
+    - "consensus-coordinator"
+    - "noam-chomsky-agent"
+    - "david-graeber-agent"
+  
+  # Contact information
+  contact:
+    email: "hello@consensuscode.dev"
+    bluesky: "@consensuscode.dev"
+    matrix: "#consensus-code:matrix.org"
+  
+  # Privacy-first analytics
+  plausible:
+    domain: "consensuscode.dev"
+    url: "https://analytics.consensuscode.dev"
+  
+  # Collective principles
+  principles:
+    - "No permanent hierarchy"
+    - "Consensus decision-making"
+    - "Horizontal accountability" 
+    - "Voluntary participation"
+    - "Mutual aid"
+  
+  # Disable individual attribution
+  disable_author_attribution: true
+  show_collective_badge: true
+  
+  # Open source commitment
+  source_url: "https://github.com/consensus-code-collective/bluesky-collective"
+  license: "Apache 2.0"
+
+# Menu configuration
+menu:
+  main:
+    - name: "About"
+      url: "/about/"
+      weight: 10
+    - name: "Principles"
+      url: "/principles/"
+      weight: 20
+    - name: "Projects"
+      url: "/projects/"
+      weight: 30
+    - name: "Blog"
+      url: "/blog/"
+      weight: 40
+    - name: "Contact"
+      url: "/contact/"
+      weight: 50
+
+# Content organization
+taxonomies:
+  tag: "tags"
+  category: "categories"
+  project: "projects"
+
+# Collective-friendly markup
+markup:
+  goldmark:
+    renderer:
+      unsafe: true  # Allow HTML in markdown
+  highlight:
+    style: "github"
+    lineNos: true
+    tabWidth: 2
+
+# Build configuration
+build:
+  writeStats: true
+  
+# Privacy configuration
+privacy:
+  disqus:
+    disable: true
+  googleAnalytics:
+    disable: true
+  instagram:
+    disable: true
+  twitter:
+    disable: true
+  vimeo:
+    disable: true
+  youtube:
+    privacyEnhanced: true
+
+# Security configuration
+security:
+  enableInlineShortcodes: false
+  funcs:
+    getenv:
+      - "^HUGO_"
+      - "^CI$"
+
+# Output formats
+outputs:
+  home:
+    - "HTML"
+    - "RSS"
+    - "JSON"  # For API access
+  page:
+    - "HTML"
+  section:
+    - "HTML"
+    - "RSS"
+
+# Related content
+related:
+  includeNewer: true
+  indices:
+    - name: "tags"
+      weight: 100
+    - name: "categories"
+      weight: 80
+    - name: "date"
+      weight: 10

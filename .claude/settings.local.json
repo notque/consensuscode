@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(go build:*)",
+      "Bash(go mod:*)",
+      "Bash(./collectiveflow proposal create:*)",
+      "Bash(./collectiveflow proposal:*)",
+      "Bash(./collectiveflow consensus start:*)",
+      "Bash(./collectiveflow:*)",
+      "Bash(git add:*)",
+      "Bash(go run:*)",
+      "Bash(python:*)",
+      "Bash(chmod:*)",
+      "Bash(./projects/collectiveflow/collectiveflow status active)",
+      "Bash(./projects/collectiveflow/collectiveflow proposal list:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(make:*)",
+      "Bash(./projects/collectiveflow/collectiveflow status all)",
+      "Bash(grep:*)",
+      "Bash(./projects/collectiveflow/collectiveflow proposal show:*)",
+      "Bash(./projects/collectiveflow/collectiveflow proposal create \"Expand Collective with Code Quality Specialist Agents\")",
+      "Bash(./projects/collectiveflow/collectiveflow consensus start:*)"
+    ],
+    "deny": []
+  }
+}

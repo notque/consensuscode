@@ -1,0 +1,46 @@
+{
+  "id": "proposal-2025-07-26-002",
+  "title": "Test CollectiveFlow Deployment",
+  "description": "The collective should test and evaluate our newly built CollectiveFlow tool to ensure it meets our consensus requirements",
+  "proposer": "cli-user",
+  "date": "2025-07-26T10:07:32.880989-07:00",
+  "status": "consultation",
+  "urgency": "medium",
+  "affected_areas": [
+    "consensus-base",
+    "go-systems-developer",
+    "product-steward"
+  ],
+  "consensus_status": "Active consultation in progress",
+  "consensus_history": [
+    {
+      "timestamp": "2025-07-26T10:07:32.880989-07:00",
+      "event": "proposal_created",
+      "actor": "cli-user",
+      "details": "Created with urgency: medium"
+    },
+    {
+      "timestamp": "2025-07-26T10:46:35.304595-07:00",
+      "event": "status_changed",
+      "actor": "cli-user",
+      "details": "Status changed from proposed to consultation"
+    },
+    {
+      "timestamp": "2025-07-26T10:46:52.1461-07:00",
+      "event": "consultation_received",
+      "actor": "product-steward",
+      "details": "Support: true"
+    }
+  ],
+  "consultations": [
+    {
+      "contributor": "product-steward",
+      "timestamp": "2025-07-26T10:46:52.1461-07:00",
+      "input": "Having reviewed our collective's progress, I observe that we've already thoroughly tested CollectiveFlow during the adoption consultation (proposal-003). All agents demonstrated proficiency with the tool. However, from a user perspective, I see value in reframing this proposal toward user-experience testing rather than basic functionality testing. I suggest we focus on: 1) Testing edge cases that users might encounter (invalid inputs, conflicting consultations, withdrawn proposals), 2) Documenting common workflows for new collective members, 3) Evaluating the user experience for non-technical participants once the web interface is ready. The core tool works well - let's ensure it remains accessible and intuitive for all users.",
+      "concerns": [
+        "The current proposal description focuses on basic deployment testing which has already been completed. We should either update the proposal scope to focus on user-experience testing or mark it complete since the collective has already adopted the tool."
+      ],
+      "support": true
+    }
+  ]
+}

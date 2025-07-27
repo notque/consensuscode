@@ -1,0 +1,30 @@
+{
+  "id": "proposal-2025-07-26-007",
+  "title": "Collective Security and Client Data Framework",
+  "description": "Security framework protecting client data through collective responsibility and transparency. Demonstrates security excellence through shared knowledge and mutual accountability rather than hierarchical roles.",
+  "proposer": "cli-user",
+  "date": "2025-07-26T11:01:01.047199-07:00",
+  "status": "consultation",
+  "urgency": "high",
+  "affected_areas": [
+    "security",
+    "infrastructure",
+    "client-data",
+    "compliance"
+  ],
+  "consensus_status": "Active consultation in progress",
+  "consensus_history": [
+    {
+      "timestamp": "2025-07-26T11:01:01.047199-07:00",
+      "event": "proposal_created",
+      "actor": "cli-user",
+      "details": "Created with urgency: high"
+    },
+    {
+      "timestamp": "2025-07-27T12:35:27.677537-07:00",
+      "event": "status_changed",
+      "actor": "cli-user",
+      "details": "Status changed from proposed to consultation"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Proposals - CollectiveFlow{% endblock %}
+
+{% block content %}
+<div class="px-4 py-5 sm:px-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Collective Proposals</h2>
+    
+    <!-- Active Consultations - Most Important -->
+    {% if grouped_proposals.consultation %}
+    <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            🗣️ Active Consultations - Input Needed
+        </h3>
+        <div class="space-y-4">
+            {% for proposal in grouped_proposals.consultation %}
+            <div class="collective-card hover:shadow-lg transition-shadow">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="text-lg font-medium text-gray-900">
+                            <a href="/proposal/{{ proposal.id }}" class="hover:text-blue-600">
+                                {{ proposal.title }}
+                            </a>
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">{{ proposal.description }}</p>
+                        <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                            <span>Proposed by: {{ proposal.proposer }}</span>
+                            <span class="{{ proposal.urgency | urgency_color }}">
+                                Urgency: {{ proposal.urgency }}
+                            </span>
+                            <span>{{ proposal.date | humanize_date }}</span>
+                        </div>
+                        {% if proposal.consultations %}
+                        <div class="mt-2">
+                            <span class="text-sm text-gray-600">
+                                {{ proposal.consultations | length }} consultation(s) received
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="ml-4">
+                        <span class="collective-badge bg-yellow-100 text-yellow-800">
+                            {{ proposal.status | status_emoji }} {{ proposal.status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- New Proposals -->
+    {% if grouped_proposals.proposed %}
+    <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            💡 New Proposals
+        </h3>
+        <div class="space-y-4">
+            {% for proposal in grouped_proposals.proposed %}
+            <div class="collective-card">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="text-lg font-medium text-gray-900">
+                            <a href="/proposal/{{ proposal.id }}" class="hover:text-blue-600">
+                                {{ proposal.title }}
+                            </a>
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">{{ proposal.description }}</p>
+                        <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                            <span>Proposed by: {{ proposal.proposer }}</span>
+                            <span class="{{ proposal.urgency | urgency_color }}">
+                                Urgency: {{ proposal.urgency }}
+                            </span>
+                            <span>{{ proposal.date | humanize_date }}</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <span class="collective-badge bg-blue-100 text-blue-800">
+                            {{ proposal.status | status_emoji }} {{ proposal.status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Consensus Reached -->
+    {% if grouped_proposals.consensus %}
+    <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            🤝 Consensus Reached
+        </h3>
+        <div class="space-y-4">
+            {% for proposal in grouped_proposals.consensus %}
+            <div class="collective-card">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="text-lg font-medium text-gray-900">
+                            <a href="/proposal/{{ proposal.id }}" class="hover:text-blue-600">
+                                {{ proposal.title }}
+                            </a>
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">{{ proposal.description }}</p>
+                        <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                            <span>{{ proposal.date | humanize_date }}</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <span class="collective-badge bg-green-100 text-green-800">
+                            {{ proposal.status | status_emoji }} {{ proposal.status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Implemented -->
+    {% if grouped_proposals.implemented %}
+    <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            ✅ Implemented
+        </h3>
+        <div class="space-y-4">
+            {% for proposal in grouped_proposals.implemented %}
+            <div class="collective-card opacity-75">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="text-lg font-medium text-gray-900">
+                            <a href="/proposal/{{ proposal.id }}" class="hover:text-blue-600">
+                                {{ proposal.title }}
+                            </a>
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">{{ proposal.description }}</p>
+                        <div class="mt-2 text-sm text-gray-500">
+                            {{ proposal.date | humanize_date }}
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <span class="collective-badge bg-gray-100 text-gray-800">
+                            {{ proposal.status | status_emoji }} {{ proposal.status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Blocked or Withdrawn -->
+    {% if grouped_proposals.blocked or grouped_proposals.withdrawn %}
+    <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+            📋 Historical Record
+        </h3>
+        <div class="space-y-4">
+            {% for proposal in grouped_proposals.blocked + grouped_proposals.withdrawn %}
+            <div class="collective-card opacity-50">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="text-lg font-medium text-gray-700">
+                            <a href="/proposal/{{ proposal.id }}" class="hover:text-blue-600">
+                                {{ proposal.title }}
+                            </a>
+                        </h4>
+                        <div class="mt-2 text-sm text-gray-500">
+                            {{ proposal.date | humanize_date }}
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <span class="collective-badge bg-gray-100 text-gray-600">
+                            {{ proposal.status | status_emoji }} {{ proposal.status }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if not (grouped_proposals.consultation or grouped_proposals.proposed or 
+              grouped_proposals.consensus or grouped_proposals.implemented or 
+              grouped_proposals.blocked or grouped_proposals.withdrawn) %}
+    <div class="text-center py-12">
+        <p class="text-gray-500">No proposals have been submitted to the collective yet.</p>
+        <p class="text-sm text-gray-400 mt-2">
+            Use the CollectiveFlow CLI to create the first proposal.
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

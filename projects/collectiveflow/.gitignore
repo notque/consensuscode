@@ -1,0 +1,15 @@
+# CollectiveFlow gitignore
+# We want to track proposals and decisions in git for transparency
+
+# Binary
+collectiveflow
+
+# Temporary files
+*.tmp
+*.swp
+
+# Config files with potential secrets (if any)
+# Note: We actually want to track most config for transparency
+
+# Logs (if we add logging)
+*.log

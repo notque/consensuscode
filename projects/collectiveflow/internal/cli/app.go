@@ -82,13 +82,16 @@ func (a *App) initConfig() {
 func (a *App) addCommands() {
 	// Add proposal management commands
 	a.rootCmd.AddCommand(newProposalCmd())
-	
+
 	// Add consensus process commands
 	a.rootCmd.AddCommand(newConsensusCmd())
-	
+
 	// Add collective status and information commands
 	a.rootCmd.AddCommand(newStatusCmd())
-	
+
 	// Add configuration management commands
 	a.rootCmd.AddCommand(newConfigCmd())
+
+	// Add web interface commands
+	a.rootCmd.AddCommand(newWebCmd())
 }

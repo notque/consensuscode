@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="site-title">
+                    <a href="/">CollectiveFlow</a>
+                </h1>
+                <p class="tagline">Horizontal Decision-Making</p>
+            </div>
+            <nav class="main-nav">
+                <a href="/" class="{{if eq .ActiveTab "home"}}active{{end}}">Home</a>
+                <a href="/proposals" class="{{if eq .ActiveTab "proposals"}}active{{end}}">Proposals</a>
+                <a href="/collective" class="{{if eq .ActiveTab "collective"}}active{{end}}">Collective</a>
+                <a href="/about" class="{{if eq .ActiveTab "about"}}active{{end}}">About</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {{template "content" .}}
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-text">
+                    Built by consensus, for consensus, through consensus.
+                </p>
+                <p class="footer-principles">
+                    No hierarchy • Full transparency • Collective ownership
+                </p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

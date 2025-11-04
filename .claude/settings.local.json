@@ -21,7 +21,8 @@
       "Bash(grep:*)",
       "Bash(./projects/collectiveflow/collectiveflow proposal show:*)",
       "Bash(./projects/collectiveflow/collectiveflow proposal create \"Expand Collective with Code Quality Specialist Agents\")",
-      "Bash(./projects/collectiveflow/collectiveflow consensus start:*)"
+      "Bash(./projects/collectiveflow/collectiveflow consensus start:*)",
+      "Bash(fish -c:*)"
     ],
     "deny": []
   }

@@ -1,0 +1,30 @@
+{{define "content"}}
+<div class="container">
+    <h1>All Proposals</h1>
+    <p class="lead">Browse the collective's proposal history. All decisions are transparent and accessible.</p>
+
+    {{if .Proposals}}
+    <div class="proposal-list">
+        {{range .Proposals}}
+        <article class="proposal-card">
+            <div class="proposal-header">
+                <h3><a href="/proposals/{{.ID}}">{{.Title}}</a></h3>
+                <div class="proposal-meta">
+                    <span class="badge {{statusClass .Status}}">{{.Status}}</span>
+                    <span class="badge {{urgencyClass .Urgency}}">{{.Urgency}}</span>
+                </div>
+            </div>
+            <p>{{.Description}}</p>
+            <div class="proposal-footer">
+                <span>By {{.Proposer}}</span>
+                <span>{{formatDate .Date}}</span>
+                {{if .Consultations}}<span>{{len .Consultations}} responses</span>{{end}}
+            </div>
+        </article>
+        {{end}}
+    </div>
+    {{else}}
+    <p>No proposals found.</p>
+    {{end}}
+</div>
+{{end}}

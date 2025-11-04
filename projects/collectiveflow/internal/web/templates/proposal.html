@@ -1,0 +1,34 @@
+{{define "content"}}
+<div class="container">
+    <article class="proposal-card">
+        <h1>{{.Proposal.Title}}</h1>
+        <div class="proposal-meta">
+            <span class="badge {{statusClass .Proposal.Status}}">{{.Proposal.Status}}</span>
+            <span class="badge {{urgencyClass .Proposal.Urgency}}">{{.Proposal.Urgency}}</span>
+        </div>
+
+        <p><strong>Proposed by:</strong> {{.Proposal.Proposer}}</p>
+        <p><strong>Date:</strong> {{formatTime .Proposal.Date}}</p>
+        <p><strong>ID:</strong> {{.Proposal.ID}}</p>
+
+        <h2>Description</h2>
+        <p>{{.Proposal.Description}}</p>
+
+        {{if .Proposal.Consultations}}
+        <h2>Consultations ({{len .Proposal.Consultations}})</h2>
+        {{range .Proposal.Consultations}}
+        <div class="proposal-card">
+            <p><strong>{{.Contributor}}</strong> - {{if .Support}}Supports{{else}}Has concerns{{end}} - {{timeAgo .Timestamp}}</p>
+            <p>{{.Input}}</p>
+            {{if .Concerns}}
+            <p><strong>Concerns:</strong></p>
+            <ul>{{range .Concerns}}<li>{{.}}</li>{{end}}</ul>
+            {{end}}
+        </div>
+        {{end}}
+        {{end}}
+
+        <p><em>Use the CLI to participate: collectiveflow consensus input {{.Proposal.ID}}</em></p>
+    </article>
+</div>
+{{end}}

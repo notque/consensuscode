@@ -1,0 +1,45 @@
+{{define "content"}}
+<div class="container">
+    <h1>Collective Status</h1>
+    <p class="lead">Transparent metrics showing our horizontal coordination in action.</p>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{.Stats.Total}}</div>
+            <div class="stat-label">Total Proposals</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{.Stats.Active}}</div>
+            <div class="stat-label">Active Discussions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{.Stats.Implemented}}</div>
+            <div class="stat-label">Implemented</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{.Stats.ConsensusRate}}%</div>
+            <div class="stat-label">Consensus Rate</div>
+        </div>
+    </div>
+
+    <h2>Collective Principles</h2>
+    <div class="participation-grid">
+        <div class="participation-card">
+            <h3>No Hierarchy</h3>
+            <p>All participants have equal voice. No admin accounts, no special privileges.</p>
+        </div>
+        <div class="participation-card">
+            <h3>Full Transparency</h3>
+            <p>All proposals, discussions, and decisions are visible to everyone.</p>
+        </div>
+        <div class="participation-card">
+            <h3>Consensus-Based</h3>
+            <p>Decisions require agreement from all affected parties.</p>
+        </div>
+        <div class="participation-card">
+            <h3>Horizontal Coordination</h3>
+            <p>We coordinate as equals, not through command structures.</p>
+        </div>
+    </div>
+</div>
+{{end}}

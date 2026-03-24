@@ -3,55 +3,64 @@ package bluesky
 import (
 	"context"
 	"time"
+
+	"github.com/consensuscode/bluesky-collective/pkg/consensus"
+	"github.com/consensuscode/bluesky-collective/pkg/storage"
 )
 
-// ATPClient defines the low-level AT Protocol operations
-type ATPClient interface {
-	// CreatePost creates a post on Bluesky
-	CreatePost(ctx context.Context, req PostRequest) (uri string, cid string, error error)
-	
-	// DeletePost removes a post from Bluesky
-	DeletePost(ctx context.Context, uri string) error
-	
-	// GetPost retrieves a specific post
-	GetPost(ctx context.Context, uri string) (*Post, error)
-	
-	// Authenticate performs authentication with Bluesky
+// Poster defines the AT Protocol posting operations needed by the bluesky package.
+type Poster interface {
+	// Authenticate creates a session with the AT Protocol server.
 	Authenticate(ctx context.Context, identifier, password string) error
+
+	// CreatePost publishes a post.
+	CreatePost(ctx context.Context, text string, langs []string) (uri string, cid string, err error)
+
+	// DeletePost removes a post by AT URI.
+	DeletePost(ctx context.Context, uri string) error
+
+	// IsAuthenticated reports whether the client holds a valid session.
+	IsAuthenticated() bool
+
+	// GetDID returns the authenticated user's DID.
+	GetDID() string
 }
 
-// Storage defines the interface for storing consensus and post data
-type Storage interface {
-	// StorePostRequest saves a post request for later publishing
-	StorePostRequest(ctx context.Context, proposalID string, req PostRequest) error
-	
-	// GetPostRequest retrieves a stored post request
-	GetPostRequest(ctx context.Context, proposalID string) (*PostRequest, error)
-	
-	// RecordPublication records that a post has been published
-	RecordPublication(ctx context.Context, proposalID string, result *PostResult) error
-	
-	// GetPublicationHistory retrieves publication history
-	GetPublicationHistory(ctx context.Context, limit int) ([]PostResult, error)
+// Store defines the storage operations needed by the bluesky package.
+type Store interface {
+	StorePostRequest(ctx context.Context, proposalID string, req storage.PostRequest) error
+	GetPostRequest(ctx context.Context, proposalID string) (*storage.PostRequest, error)
+	RecordPublication(ctx context.Context, proposalID string, result storage.PostResult) error
+	GetPublicationHistory(ctx context.Context, limit int) ([]storage.PostResult, error)
 }
 
-// Post represents a Bluesky post
+// Consensus defines the consensus operations needed by the bluesky package.
+type Consensus interface {
+	ProposePost(ctx context.Context, proposal consensus.Proposal) (*consensus.Decision, error)
+	GetDecision(ctx context.Context, proposalID string) (*consensus.Decision, error)
+	RecordVote(ctx context.Context, proposalID string, vote consensus.Vote) error
+	CheckConsensus(ctx context.Context, proposalID string) (bool, error)
+	ListPendingProposals(ctx context.Context) ([]consensus.Proposal, error)
+	GetProposal(ctx context.Context, proposalID string) (*consensus.Proposal, error)
+}
+
+// Post represents a Bluesky post.
 type Post struct {
-	URI       string                 `json:"uri"`
-	CID       string                 `json:"cid"`
-	Author    Author                 `json:"author"`
-	Record    Record                 `json:"record"`
-	CreatedAt time.Time              `json:"created_at"`
+	URI       string    `json:"uri"`
+	CID       string    `json:"cid"`
+	Author    Author    `json:"author"`
+	Record    Record    `json:"record"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-// Author represents a post author
+// Author represents a post author.
 type Author struct {
 	DID         string `json:"did"`
 	Handle      string `json:"handle"`
 	DisplayName string `json:"display_name"`
 }
 
-// Record represents the post content record
+// Record represents the post content record.
 type Record struct {
 	Text      string   `json:"text"`
 	CreatedAt string   `json:"created_at"`

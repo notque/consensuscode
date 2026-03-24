@@ -15,46 +15,108 @@ This application was designed and built through genuine consensus by a horizonta
 
 ## Features
 
-### Phase 1 (Current)
+### CLI Tool (Go)
 - **Proposal Management**: Create, track, and manage collective proposals
 - **Consensus Coordination**: Tools for systematic agent consultation
 - **Decision Documentation**: Complete audit trail of collective decisions
 - **Anti-Hierarchy Safeguards**: No privileged users or administrative override capabilities
 
-### Phase 2 (Planned)
-- **Web Interface**: Accessible web application for broader collective use
+<<<<<<< Updated upstream
+### Web Interface (Flask) -- `web/`
+- **Proposal Browser**: View all proposals organized by status
+- **Proposal Details**: See detailed information including consultation history
+- **Collective Statistics**: Track the collective's activity and decision patterns
+- **JSON API**: RESTful endpoints for integration with other tools
+- **No Authentication**: All information equally accessible, no admin panels or special roles
+- **Responsive Design**: Works on all devices
+
+See [web/README.md](web/README.md) for setup and usage.
+
+### Planned
 - **Integration APIs**: Connect with external collaboration tools
-- **Process Analytics**: Insights into collective decision-making effectiveness
+- **Process Analytics**: Deeper insights into collective decision-making effectiveness
 - **Collective Configuration**: Runtime modification of application behavior through consensus
+=======
+### Phase 2 (Implemented)
+- **Web Interface**: Flask-based web application for visual proposal management
+- **API Endpoints**: RESTful API for external integrations
+- **Simple Deployment**: Local-first with optional Docker containerization
+- **Transparent Storage**: Human-readable YAML files for all data
+>>>>>>> Stashed changes
 
 ## Architecture
 
-**Design Philosophy**: CLI-first with modular architecture supporting future web interface integration
+**Design Philosophy**: CLI-first with modular architecture, now extended with a Flask web interface
 
-**Storage**: Hybrid file-based primary storage with optional database backend for complex queries
+**CLI**: Go application using Cobra for command parsing and Viper for configuration
 
-**Event Sourcing**: Complete audit trail of all collective activities and decisions
+**Web Interface**: Flask application (`web/`) that reads the same YAML proposal files as the CLI, providing browser-based access without any separate database
+
+**Storage**: File-based YAML storage in `data/proposals/` -- human-readable, git-friendly, and transparent
+
+**Event Sourcing**: Complete audit trail of all collective activities and decisions via consensus history in each proposal file
 
 **Plugin Architecture**: Modular design allowing collective to add features through consensus
 
+## Quick Start
+
+### Option 1: Local Development (Recommended)
+```bash
+make install    # Install Python dependencies
+make dev-web    # Start web interface at http://localhost:5000
+```
+
+### Option 2: Docker (Optional)
+```bash
+make docker-build && make docker-up
+# Access at http://localhost:5000
+```
+
 ## Usage
 
+### CLI Commands
 ```bash
 # Create a new proposal
-collectiveflow proposal create "Implement new feature X"
+./collectiveflow proposal create "Implement new feature X" \
+  --description "Detailed description" \
+  --urgency medium
 
-# List active proposals  
-collectiveflow proposal list --status active
+# Show active proposals
+./collectiveflow status active
 
-# Begin consensus process for a proposal
-collectiveflow consensus start proposal-2025-01-26-001
+# Begin consensus process
+./collectiveflow consensus start proposal-2025-11-05-abc123
 
-# Track consultation status
-collectiveflow consensus status proposal-2025-01-26-001
+# Add agent input
+./collectiveflow consensus input proposal-2025-11-05-abc123 \
+  --support \
+  --comment "I agree with this approach"
 
-# Document consensus decision
-collectiveflow consensus complete proposal-2025-01-26-001 --result approved
+# Complete consensus decision
+./collectiveflow consensus complete proposal-2025-11-05-abc123
 ```
+
+### Web Interface
+- Browse all proposals by status
+- Create new proposals via form
+- View consensus history
+- Track collective activity
+- RESTful API endpoints
+
+## Documentation
+
+**New to CollectiveFlow?** Start with the **[Getting Started Guide](docs/GETTING_STARTED.md)**
+
+Comprehensive documentation available in the `docs/` directory:
+
+- **[Getting Started](docs/GETTING_STARTED.md)** - Your first time using CollectiveFlow, understanding consensus
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - Why the system is designed this way, horizontal principles
+- **[Proposal Guide](docs/PROPOSALS.md)** - Writing effective proposals, reaching consensus
+- **[Development Guide](docs/DEVELOPMENT.md)** - Setting up your dev environment, contributing code
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Running CollectiveFlow in production
+- **[Documentation Index](docs/README.md)** - Complete guide to all documentation
+
+All documentation is designed to be accessible regardless of technical background.
 
 ## Collective Development Process
 
@@ -91,11 +153,14 @@ go test ./...
 
 This project uses horizontal development principles:
 
-1. **Read the collective development guidelines** in `docs/COLLECTIVE_DEVELOPMENT.md`
-2. **Submit proposals** for changes through the collective consensus process
-3. **Participate in cross-domain review** of technical implementations
-4. **Document reasoning** for all contributions transparently
-5. **Support collective decisions** even when they differ from individual technical preferences
+1. **Read the [Development Guide](docs/DEVELOPMENT.md)** to set up your environment
+2. **Read the [Proposal Guide](docs/PROPOSALS.md)** to understand effective contribution
+3. **Submit proposals** for changes through the collective consensus process
+4. **Participate in cross-domain review** of technical implementations
+5. **Document reasoning** for all contributions transparently
+6. **Support collective decisions** even when they differ from individual technical preferences
+
+See [Development Guide](docs/DEVELOPMENT.md) for detailed contribution instructions.
 
 ## Philosophy
 

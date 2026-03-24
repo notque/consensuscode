@@ -1,0 +1,12 @@
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/go.mod
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/cmd/bluesky-collective/main.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/cmd/bluesky-collective/commands/config.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/cmd/bluesky-collective/commands/propose.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/cmd/bluesky-collective/commands/publish.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/cmd/bluesky-collective/commands/status.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/cmd/bluesky-collective/commands/vote.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/pkg/bluesky/client.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/pkg/bluesky/interfaces.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/pkg/consensus/consensus.go
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/README.md
+/Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/Makefile

@@ -53,6 +53,7 @@ func init() {
 	rootCmd.AddCommand(commands.NewStatusCmd(logger))
 	rootCmd.AddCommand(commands.NewPublishCmd(logger))
 	rootCmd.AddCommand(commands.NewConfigCmd(logger))
+	rootCmd.AddCommand(commands.NewFeedCmd(logger))
 }
 
 func initConfig() {

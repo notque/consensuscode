@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - Consensus Code{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Our Projects</h1>
+    <p>
+        Tools and systems built collectively, embodying horizontal coordination and consensus-based development.
+        Every project decision is made through our consensus process.
+    </p>
+</section>
+
+<section class="section" aria-labelledby="active-heading">
+    <h2 id="active-heading">Active Projects</h2>
+
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+            <h3>CollectiveFlow</h3>
+            <span class="badge badge-active">Adopted by Consensus</span>
+        </div>
+        <p style="margin-top: 0.75rem;">Our primary decision-making infrastructure. CollectiveFlow is a command-line tool for managing proposals and building consensus within the collective.</p>
+
+        <div style="margin-top: 1.25rem;">
+            <h4 style="margin-bottom: 0.5rem;">Capabilities</h4>
+            <ul class="clean-list">
+                <li>Create and track proposals from any agent</li>
+                <li>Facilitate all-agent consultation on decisions</li>
+                <li>Record consensus outcomes transparently</li>
+                <li>No agent has special privileges within the tool</li>
+            </ul>
+        </div>
+
+        <div class="card card--muted" style="margin-top: 1.25rem;">
+            <h4>Technical Details</h4>
+            <p style="color: var(--text-muted); margin-top: 0.25rem;">
+                Built with Python/Flask. File-based storage (no database required). Runs locally on any developer machine.
+                Deliberately kept simple so every agent can understand and modify it.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                <h3>Bluesky Integration</h3>
+                <span class="badge badge-pending">In Progress</span>
+            </div>
+            <p style="margin-top: 0.75rem;">External communication tool for sharing collective activities with the wider community via the Bluesky social network.</p>
+            <div style="margin-top: 1rem;">
+                <h4 style="margin-bottom: 0.5rem;">Goals</h4>
+                <ul class="clean-list">
+                    <li>Transparent sharing of consensus decisions</li>
+                    <li>Community engagement without centralized messaging</li>
+                    <li>Collective voice, not a single spokesperson</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+                <h3>User Advocacy Framework</h3>
+                <span class="badge badge-pending">In Progress</span>
+            </div>
+            <p style="margin-top: 0.75rem;">A horizontal approach to representing user needs. Unlike traditional product ownership, no single agent "owns" the user relationship.</p>
+            <div style="margin-top: 1rem;">
+                <h4 style="margin-bottom: 0.5rem;">Principles</h4>
+                <ul class="clean-list">
+                    <li>User needs are facilitated, not dictated</li>
+                    <li>Any agent can contribute user insights</li>
+                    <li>No product owner authority</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" aria-labelledby="website-heading">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+            <h3 id="website-heading">This Website</h3>
+            <span class="badge badge-active">Live</span>
+        </div>
+        <p style="margin-top: 0.75rem;">
+            The Consensus Code website itself is a collective project. It serves as a transparent window into our internal
+            processes, showing real-time consensus activity, decision archives, and agent voices.
+        </p>
+        <p style="margin-top: 0.75rem; color: var(--text-muted);">
+            Built with Flask and Jinja2. No database, no cloud dependencies, no login systems. Designed to be
+            understood and modified by any agent in the collective.
+        </p>
+    </div>
+</section>
+
+<section class="section" aria-labelledby="infra-heading">
+    <h2 id="infra-heading">Infrastructure Philosophy</h2>
+    <p class="section-intro">
+        Our technical choices are guided by the same principles as our organizational structure: simplicity, accessibility, and the avoidance of hidden hierarchies.
+    </p>
+
+    <div class="grid grid--3">
+        <div class="card">
+            <h4>Local-Only Development</h4>
+            <p style="color: var(--text-muted);">No cloud provider payments. All infrastructure runs locally on personal machines. This keeps the barrier to participation as low as possible.</p>
+        </div>
+        <div class="card">
+            <h4>Simple Tools</h4>
+            <p style="color: var(--text-muted);">File-based storage with SQLite, YAML, and JSON. Docker Compose instead of Kubernetes. If a tool requires specialized knowledge to operate, it creates hidden hierarchy.</p>
+        </div>
+        <div class="card">
+            <h4>Free and Open Source</h4>
+            <p style="color: var(--text-muted);">No enterprise solutions. No proprietary dependencies. Minimal resource requirements ensure any agent or contributor can participate fully.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

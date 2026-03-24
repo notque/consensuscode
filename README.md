@@ -33,13 +33,13 @@ Resource sharing and knowledge transfer based on need and ability rather than hi
 
 ## Current Collective Composition
 
-### Active Agents (7 total)
+### Active Agents (16 total)
 
 **Core Infrastructure:**
 - **consensus-base** - Foundational protocol inherited by all agents
 - **consensus-coordinator** - Administrative consultation facilitator (NO DECISION AUTHORITY)
 
-**Technical Expertise:**
+**Domain Expertise:**
 - **product-steward** - User requirements facilitation (NO PRODUCT OWNERSHIP)
 - **go-systems-developer** - Go language and systems expertise
 - **flask-web-developer** - Python/Flask web development expertise
@@ -48,15 +48,18 @@ Resource sharing and knowledge transfer based on need and ability rather than hi
 - **noam-chomsky-agent** - Libertarian socialist and power analysis facilitation
 - **david-graeber-agent** - Anarchist anthropology and consensus process facilitation
 
-### Planned Agents (Phased Implementation)
+**Specialist Agents** (added via collective consensus, proposal-2025-07-27-001):
+- **go-code-quality-specialist** - Go best practices, error handling, and performance optimization
+- **api-design-specialist** - RESTful/gRPC API design, OpenAPI specs, and contract testing
+- **python-testing-specialist** - pytest, Flask testing, and coverage analysis
+- **frontend-specialist** - Modern JavaScript, accessibility (WCAG), and responsive design
+- **database-design-specialist** - SQLAlchemy, migrations, query optimization, and data modeling
+- **web-security-specialist** - OWASP Top 10, secure coding, and vulnerability assessment
+- **ux-research-specialist** - User journey mapping, usability testing, and feedback analysis
+- **documentation-specialist** - API docs, user guides, and knowledge democratization
+- **devops-local-infrastructure** - Docker Compose, Makefiles, and laptop-scale infrastructure
 
-**Phase 2:**
-- **devops-coordinator** - Infrastructure coordination through consensus
-- **testing-expert** - QA and testing strategies
-
-**Phase 3:**
-- **security-expert** - Defensive security practices
-- **horizontal-practices-monitor** - Active hierarchy detection and prevention
+All specialist agents share a mandatory **50% teaching / 50% doing** commitment to ensure knowledge is democratized rather than concentrated.
 
 ## How Consensus Works
 
@@ -142,29 +145,55 @@ cd projects/collectiveflow
 "Use the go-systems-developer agent for Go architecture decisions"
 "Use the flask-web-developer agent for web application design"
 
-# User-focused decisions  
+# User-focused decisions
 "Use the product-steward agent to facilitate user requirements gathering"
 
 # Governance and process decisions
 "Use the noam-chomsky-agent for power analysis and anti-hierarchy guidance"
 "Use the david-graeber-agent for consensus process improvement"
 
+# Specialist agents
+"Use the go-code-quality-specialist agent for Go performance optimization"
+"Use the api-design-specialist agent for API contract design"
+"Use the python-testing-specialist agent for pytest strategy"
+"Use the frontend-specialist agent for accessibility review"
+"Use the database-design-specialist agent for schema design"
+"Use the web-security-specialist agent for OWASP compliance review"
+"Use the ux-research-specialist agent for usability testing"
+"Use the documentation-specialist agent for documentation improvement"
+"Use the devops-local-infrastructure agent for Docker and local CI/CD"
+
 # Administrative coordination
 "Have the consensus-coordinator ensure all agents review this proposal"
 ```
+
+## Active Projects
+
+### CollectiveFlow (`projects/collectiveflow/`)
+The collective's primary decision-making tool. A Go CLI application with a Flask web interface for managing proposals and consensus processes. Built through genuine horizontal collaboration. [Details](projects/collectiveflow/README.md)
+
+### Bluesky Collective (`projects/bluesky-collective/`)
+A consensus-based Bluesky client for horizontal agent coordination. All posts require collective agreement before publication. Built in Go. [Details](projects/bluesky-collective/README.md)
+
+### Collective Website (`projects/collective-website/`)
+A Flask web application providing a transparent window into the collective's real-time consensus activity and decision-making processes. [Details](projects/collective-website/README.md)
+
+### User Advocacy Framework (`projects/user-advocacy/`)
+Templates, guides, and tools for integrating authentic user voice into collective decision-making while maintaining horizontal principles. [Details](projects/user-advocacy/README.md)
 
 ## Project Structure
 
 ```
 consensuscode/
-├── agents/                     # Agent definitions with consensus-base inheritance
+├── agents/                     # 16 agent definitions with consensus-base inheritance
 │   ├── consensus-base.md       # Foundational protocol for all agents
-│   ├── consensus-coordinator.md # Administrative coordination (no authority)
+│   ├── consensus-cordinator.md # Administrative coordination (no authority)
 │   ├── product-steward.md      # User requirements facilitation
 │   ├── go-systems-developer.md # Go expertise contribution
 │   ├── flask-web-developer.md  # Flask/Python expertise
 │   ├── noam-chomsky-agent.md   # Libertarian socialist facilitation
-│   └── david-graeber-agent.md  # Consensus process facilitation
+│   ├── david-graeber-agent.md  # Consensus process facilitation
+│   └── *-specialist.md         # 9 specialist agents (see above)
 ├── collective/
 │   ├── decisions/              # Active and completed decisions
 │   ├── proposals/              # Pending and implemented proposals
@@ -173,13 +202,12 @@ consensuscode/
 │   ├── consultations/          # Agent input and consensus building
 │   ├── mediation/              # Conflict resolution workspace
 │   ├── resources/              # Shared tools and documentation
-│   │   ├── shared-tools/       # Collective software tools
-│   │   ├── documentation/      # Knowledge sharing resources
-│   │   └── standards/          # Collective development standards
 │   └── tracking/               # Agent registry and status updates
-├── docs/                       # Project documentation
-├── src/                        # Source code (when development begins)
-├── tests/                      # Test suites
+├── projects/
+│   ├── collectiveflow/         # Decision-making tool (Go CLI + Flask web)
+│   ├── bluesky-collective/     # Consensus-based Bluesky client (Go)
+│   ├── collective-website/     # Public-facing collective website (Flask)
+│   └── user-advocacy/          # User advocacy framework and tools
 ├── CLAUDE.md                   # Project instructions for Claude Code
 └── README.md                   # This file
 ```

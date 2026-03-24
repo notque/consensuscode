@@ -41,7 +41,14 @@ def load_proposals():
             print(f"Error loading {yaml_file}: {e}")
     
     # Sort by date, newest first
-    proposals.sort(key=lambda p: p.get('date', ''), reverse=True)
+    # Normalize dates to strings for consistent comparison (YAML may parse dates as datetime objects)
+    def sort_key(p):
+        date = p.get('date', '')
+        if isinstance(date, datetime):
+            return date.isoformat()
+        return str(date)
+
+    proposals.sort(key=sort_key, reverse=True)
     return proposals
 
 def get_proposal(proposal_id):
@@ -137,6 +144,33 @@ def api_proposal(proposal_id):
         return jsonify({'error': 'Proposal not found'}), 404
     
     return jsonify(proposal)
+
+@app.route('/proposals')
+def proposals_list():
+    """View showing all proposals grouped by status."""
+    proposals = load_proposals()
+
+    # Group proposals by status
+    grouped = {
+        'consultation': [],
+        'proposed': [],
+        'consensus': [],
+        'implemented': [],
+        'blocked': [],
+        'withdrawn': []
+    }
+
+    for proposal in proposals:
+        status = proposal.get('status', 'proposed')
+        if status in grouped:
+            grouped[status].append(proposal)
+
+    return render_template('proposals.html', grouped_proposals=grouped)
+
+@app.route('/about')
+def about():
+    """View showing information about the collective and its principles."""
+    return render_template('about.html')
 
 @app.route('/collective')
 def collective_view():

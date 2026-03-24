@@ -32,11 +32,12 @@ class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
     ENV = 'production'
-    
-    # Override with environment variables in production
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        raise ValueError("SECRET_KEY environment variable must be set in production")
+
+    @staticmethod
+    def init_app(app):
+        """Validate production requirements at app init time, not import time."""
+        if not os.environ.get('SECRET_KEY'):
+            raise ValueError("SECRET_KEY environment variable must be set in production")
 
 class TestingConfig(Config):
     """Testing configuration"""

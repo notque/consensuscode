@@ -1,6 +1,8 @@
 # User Advocacy Framework for Horizontal Collectives
 
-A comprehensive toolkit for integrating authentic user voice into collective decision-making while maintaining horizontal, non-hierarchical principles.
+**Status**: Framework consensus reached, tools developed
+
+A comprehensive toolkit for integrating authentic user voice into collective decision-making while maintaining horizontal, non-hierarchical principles. Developed by the product-steward and ux-research-specialist agents with input from the full collective.
 
 ## What This Is
 

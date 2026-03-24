@@ -17,15 +17,29 @@ This project implements a consensus-based software development collective using 
 ### Base Consensus Protocol
 All agents inherit foundational consensus principles and communication protocols. No agent has permanent authority over others.
 
-### Active Agents (Non-Hierarchical)
+### Active Agents (16 total, Non-Hierarchical)
+
+**Core and Domain Agents:**
 - **consensus-base**: Foundational protocol inherited by all agents
 - **consensus-coordinator**: Administrative consultation facilitator (NO DECISION AUTHORITY)
 - **product-steward**: User requirements facilitation (NO PRODUCT OWNERSHIP)
 - **go-systems-developer**: Go language and systems expertise contribution
 - **flask-web-developer**: Python/Flask web development expertise
-- **devops-coordinator**: Infrastructure coordination through simple, local tools
+
+**Philosophical Facilitators:**
 - **noam-chomsky-agent**: Libertarian socialist and power analysis facilitation
 - **david-graeber-agent**: Anarchist anthropology and consensus process facilitation
+
+**Specialist Agents (50% teaching / 50% doing):**
+- **go-code-quality-specialist**: Go best practices, error handling, performance optimization
+- **api-design-specialist**: RESTful/gRPC API design, OpenAPI, contract testing
+- **python-testing-specialist**: pytest, Flask testing, coverage analysis
+- **frontend-specialist**: Modern JavaScript, accessibility (WCAG), responsive design
+- **database-design-specialist**: SQLAlchemy, migrations, query optimization
+- **web-security-specialist**: OWASP Top 10, secure coding, vulnerability assessment
+- **ux-research-specialist**: User journey mapping, usability testing, feedback analysis
+- **documentation-specialist**: API docs, user guides, knowledge democratization
+- **devops-local-infrastructure**: Docker Compose, Makefiles, local CI/CD
 
 ### Coordination Mechanism
 The Consensus Coordinator ensures ALL agents are systematically consulted on collective decisions but has zero decision-making authority. Think of it as an administrative secretary, not a manager.
@@ -100,6 +114,15 @@ Use specific agents for their expertise:
 - `Use the product-steward agent to facilitate user requirements gathering`
 - `Use the noam-chomsky-agent agent for power analysis and anti-hierarchy guidance`
 - `Use the david-graeber-agent agent for consensus process improvement`
+- `Use the go-code-quality-specialist agent for Go performance and error handling`
+- `Use the api-design-specialist agent for API contract design`
+- `Use the python-testing-specialist agent for pytest and test strategy`
+- `Use the frontend-specialist agent for accessibility and frontend development`
+- `Use the database-design-specialist agent for schema and query optimization`
+- `Use the web-security-specialist agent for OWASP compliance and security review`
+- `Use the ux-research-specialist agent for usability testing and user research`
+- `Use the documentation-specialist agent for documentation improvement`
+- `Use the devops-local-infrastructure agent for Docker and local CI/CD setup`
 - `Have the consensus-coordinator ensure all agents review this proposal`
 
 ## Current Projects
@@ -145,13 +168,15 @@ Per David Graeber's "rotation illusion" warning:
 
 ## Current Collective Status
 
-The collective has reached consensus on its foundational structure:
-- **7 active agents** operating through horizontal coordination
-- **CollectiveFlow decision tool** implemented and in use
-- **External communication projects** under development
+The collective has reached consensus on its foundational structure and expanded:
+- **16 active agents** operating through horizontal coordination (7 core + 9 specialists)
+- **4 active projects**: CollectiveFlow, Bluesky Collective, Collective Website, User Advocacy
+- **CollectiveFlow decision tool** implemented with both CLI and web interface
+- **External communication projects** under development (Bluesky integration, website)
 - **Local-only infrastructure** approach established
 - **Multiple consensus processes** completed successfully
 - **Horizontal software consulting preparation** in progress
+- **Specialist agents hired** through collective consensus (proposal-2025-07-27-001)
 
 ## Anti-Patterns to Avoid
 

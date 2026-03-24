@@ -1,79 +1,292 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CollectiveFlow - A horizontal, consensus-based decision-making system built on libertarian socialist principles. No hierarchy, no special roles, complete transparency.">
+    <meta name="theme-color" content="#2563eb">
     <title>{% block title %}CollectiveFlow - Horizontal Consensus System{% endblock %}</title>
-    
-    <!-- Tailwind CSS for quick, accessible styling -->
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Custom styles for collective branding -->
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-in': 'slideIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
     <style>
-        /* No hierarchical styling - all elements are equal */
+        /* Accessibility: Respect user motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus visible styles for keyboard navigation */
+        *:focus-visible {
+            outline: 3px solid #3b82f6;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Skip to main content link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 0 0 4px 0;
+            z-index: 100;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+
+        /* Collective design system - horizontal, equal elements */
         .collective-card {
-            @apply bg-white rounded-lg shadow-md p-6 mb-4 border border-gray-200;
+            @apply bg-white rounded-lg shadow-sm p-6 mb-4 border border-gray-200 transition-all duration-200;
         }
-        
+
+        .collective-card:hover {
+            @apply shadow-md border-gray-300;
+        }
+
         .collective-badge {
-            @apply inline-block px-3 py-1 rounded-full text-sm font-medium;
+            @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
         }
-        
-        /* Horizontal navigation - no dropdown menus or hierarchy */
+
+        /* Horizontal navigation - no hierarchy, all links equal */
         .nav-link {
-            @apply text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium;
+            @apply text-gray-700 hover:text-primary-600 hover:bg-primary-50 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150;
+            position: relative;
+        }
+
+        .nav-link:focus-visible {
+            @apply ring-2 ring-primary-500 ring-offset-2;
+        }
+
+        /* Mobile menu button */
+        .mobile-menu-button {
+            @apply inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500;
+        }
+
+        /* Responsive typography */
+        .responsive-heading {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+
+        /* Smooth transitions */
+        .transition-smooth {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print { display: none; }
+            .collective-card { border: 1px solid #ccc; box-shadow: none; }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Header: Simple, horizontal navigation -->
-    <header class="bg-white shadow-sm">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Header with responsive navigation -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 no-print" role="banner">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
             <div class="flex justify-between h-16">
-                <div class="flex">
+                <!-- Logo and desktop navigation -->
+                <div class="flex flex-1">
                     <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-xl font-bold text-gray-900">
-                            🤝 CollectiveFlow
-                        </h1>
+                        <a href="/" class="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md" aria-label="CollectiveFlow home">
+                            <span class="text-2xl" aria-hidden="true">🤝</span>
+                            <h1 class="text-xl font-bold text-gray-900">CollectiveFlow</h1>
+                        </a>
                     </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="/" class="nav-link">Proposals</a>
-                        <a href="/collective" class="nav-link">Collective</a>
-                        <span class="nav-link text-gray-400">No Login Required</span>
+
+                    <!-- Desktop navigation -->
+                    <div class="hidden md:ml-6 md:flex md:space-x-2" role="list">
+                        <a href="/" class="nav-link" role="listitem">Home</a>
+                        <a href="/proposals" class="nav-link" role="listitem">All Proposals</a>
+                        <a href="/collective" class="nav-link" role="listitem">Collective</a>
+                        <a href="/about" class="nav-link" role="listitem">About</a>
+                        <span class="nav-link text-gray-400 cursor-default" role="listitem" aria-label="No authentication required">No Login Required</span>
                     </div>
                 </div>
-                <div class="flex items-center">
-                    <span class="text-sm text-gray-500">
-                        A Horizontal Consensus System
-                    </span>
+
+                <!-- Tagline (hidden on mobile) -->
+                <div class="hidden lg:flex items-center">
+                    <span class="text-sm text-gray-500">A Horizontal Consensus System</span>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="flex items-center md:hidden">
+                    <button type="button"
+                            class="mobile-menu-button"
+                            aria-expanded="false"
+                            aria-controls="mobile-menu"
+                            onclick="toggleMobileMenu()">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile navigation menu -->
+            <div class="hidden md:hidden" id="mobile-menu">
+                <div class="px-2 pt-2 pb-3 space-y-1" role="menu">
+                    <a href="/" class="nav-link block" role="menuitem">Home</a>
+                    <a href="/proposals" class="nav-link block" role="menuitem">All Proposals</a>
+                    <a href="/collective" class="nav-link block" role="menuitem">Collective</a>
+                    <a href="/about" class="nav-link block" role="menuitem">About</a>
+                    <span class="nav-link block text-gray-400 cursor-default" role="menuitem">No Login Required</span>
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <!-- Main content area -->
+    <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto py-6 px-4 sm:px-6 lg:px-8" role="main">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer: Collective principles reminder -->
-    <footer class="bg-white mt-12">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <div class="text-center text-sm text-gray-500">
-                <p class="mb-2">
-                    This system operates on horizontal principles: 
-                    <strong>No hierarchy</strong> • 
-                    <strong>No special roles</strong> • 
-                    <strong>Consensus-based decisions</strong>
-                </p>
-                <p>
-                    Every member of the collective has equal voice and access.
+    <!-- Footer -->
+    <footer class="bg-white mt-12 border-t border-gray-200 no-print" role="contentinfo">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="mb-4">
+                    <p class="text-sm text-gray-700 mb-2">
+                        <strong class="font-semibold">Horizontal Principles:</strong>
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-3 text-sm text-gray-600">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                            No hierarchy
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                            No special roles
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Consensus-based
+                        </span>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500">
+                    Every member has equal voice and access. Built through consensus, maintained through consensus.
                 </p>
             </div>
         </div>
     </footer>
 
-    <!-- Optional JavaScript for enhanced interactions -->
+    <!-- Base JavaScript for interactions -->
+    <script>
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const button = menu.previousElementSibling.querySelector('button');
+            const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+            button.setAttribute('aria-expanded', !isExpanded);
+            menu.classList.toggle('hidden');
+
+            // Update icon
+            const icon = button.querySelector('svg');
+            if (isExpanded) {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+            }
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.querySelector('.mobile-menu-button');
+
+            if (menu && button && !menu.classList.contains('hidden')) {
+                if (!menu.contains(event.target) && !button.contains(event.target)) {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // Close mobile menu on escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const menu = document.getElementById('mobile-menu');
+                if (menu && !menu.classList.contains('hidden')) {
+                    toggleMobileMenu();
+                }
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && href !== '#main-content') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        target.focus();
+                    }
+                }
+            });
+        });
+    </script>
+
+    <!-- Page-specific scripts -->
     {% block scripts %}{% endblock %}
 </body>
 </html>

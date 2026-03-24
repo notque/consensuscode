@@ -4,14 +4,15 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
-// NewPublishCmd creates the publish command for posting after consensus
+// NewPublishCmd creates the publish command for posting after consensus.
 func NewPublishCmd(logger *zap.Logger) *cobra.Command {
 	var (
 		proposalID string
-		force      bool
+		dryRun     bool
 	)
 
 	cmd := &cobra.Command{
@@ -22,49 +23,86 @@ func NewPublishCmd(logger *zap.Logger) *cobra.Command {
 This command will only succeed if:
 1. Consensus has been reached on the proposal
 2. No agents have blocked the proposal
-3. The proposal has not expired
+3. Valid Bluesky credentials are configured
 
 Example:
   bluesky-collective publish --proposal proposal-123`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.Info("Attempting to publish proposal",
 				zap.String("proposal_id", proposalID),
-				zap.Bool("force", force),
+				zap.Bool("dry_run", dryRun),
 			)
 
-			// TODO: Check consensus status and publish if ready
-			
-			if !force {
-				// Check consensus first
-				fmt.Printf("Checking consensus status for proposal %s...\n", proposalID)
-				
-				// Simulate consensus check
-				consensusReached := false // TODO: actual check
-				
-				if !consensusReached {
-					fmt.Printf("❌ Cannot publish: Consensus not yet reached\n")
-					fmt.Printf("Use 'bluesky-collective status --proposal %s' to check progress.\n", proposalID)
-					return fmt.Errorf("consensus not reached")
-				}
+			// Check consensus first using the checker directly
+			checker, err := newConsensusChecker()
+			if err != nil {
+				return fmt.Errorf("initialize consensus checker: %w", err)
 			}
 
-			fmt.Printf("✅ Consensus reached for proposal %s\n", proposalID)
-			fmt.Printf("Publishing to Bluesky...\n")
-			
-			// TODO: Actual publishing logic
-			
-			fmt.Printf("✅ Post published successfully!\n")
-			fmt.Printf("Bluesky URI: at://did:plc:example/app.bsky.feed.post/123456\n")
-			fmt.Printf("Posted by: @collectiveflow.bsky.social\n")
-			fmt.Printf("Consensus ID: %s\n", proposalID)
-			
+			decision, err := checker.GetDecision(cmd.Context(), proposalID)
+			if err != nil {
+				return fmt.Errorf("get decision: %w", err)
+			}
+
+			fmt.Printf("Proposal: %s\n", proposalID)
+			fmt.Printf("Consensus status: %s\n", decision.Status)
+			fmt.Printf("Votes: %d\n", len(decision.AgentVotes))
+
+			if decision.Status != "consensus" {
+				fmt.Printf("\nCannot publish: consensus not yet reached.\n")
+				fmt.Printf("Use 'bluesky-collective status --proposal %s' to check progress.\n", proposalID)
+				return fmt.Errorf("consensus not reached (status: %s)", decision.Status)
+			}
+
+			if dryRun {
+				store, err := newFileStore()
+				if err != nil {
+					return fmt.Errorf("initialize storage: %w", err)
+				}
+				req, err := store.GetPostRequest(cmd.Context(), proposalID)
+				if err != nil {
+					return fmt.Errorf("get post request: %w", err)
+				}
+				fmt.Printf("\n[DRY RUN] Would publish:\n")
+				fmt.Printf("  Text: %q\n", req.Text)
+				fmt.Printf("  Consensus ID: %s\n", proposalID)
+				return nil
+			}
+
+			// Check credentials
+			identifier := viper.GetString("bluesky.identifier")
+			password := viper.GetString("bluesky.password")
+			if identifier == "" || password == "" {
+				return fmt.Errorf("Bluesky credentials not configured. Use 'bluesky-collective config set bluesky.identifier <handle>' and 'bluesky-collective config set bluesky.password <app-password>'")
+			}
+
+			client, err := newCollectiveClient()
+			if err != nil {
+				return fmt.Errorf("initialize client: %w", err)
+			}
+
+			// Authenticate
+			if err := client.Authenticate(cmd.Context(), identifier, password); err != nil {
+				return fmt.Errorf("authenticate with Bluesky: %w", err)
+			}
+
+			// Publish
+			result, err := client.PublishWithConsensus(cmd.Context(), proposalID)
+			if err != nil {
+				return fmt.Errorf("publish: %w", err)
+			}
+
+			fmt.Printf("\nPost published successfully!\n")
+			fmt.Printf("  URI: %s\n", result.URI)
+			fmt.Printf("  CID: %s\n", result.CID)
+			fmt.Printf("  Consensus ID: %s\n", result.ConsensusID)
+
 			return nil
 		},
 	}
 
-	// Flags
 	cmd.Flags().StringVarP(&proposalID, "proposal", "p", "", "Proposal ID to publish (required)")
-	cmd.Flags().BoolVar(&force, "force", false, "Force publish without checking consensus (dangerous)")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be published without actually posting")
 
 	cmd.MarkFlagRequired("proposal")
 

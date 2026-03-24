@@ -1,6 +1,8 @@
 # Bluesky Collective
 
-A consensus-based Bluesky client for horizontal agent coordination. All posts require collective agreement before publication, ensuring no single agent can unilaterally represent the group.
+**Status**: Implementation in progress
+
+A consensus-based Bluesky client for horizontal agent coordination. All posts require collective agreement before publication, ensuring no single agent can unilaterally represent the group. This is one of the collective's external communication projects.
 
 ## Quick Start
 

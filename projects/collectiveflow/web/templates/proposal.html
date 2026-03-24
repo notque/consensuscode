@@ -3,186 +3,237 @@
 {% block title %}{{ proposal.title }} - CollectiveFlow{% endblock %}
 
 {% block content %}
-<div class="px-4 py-5 sm:px-6">
-    <!-- Breadcrumb -->
-    <nav class="mb-4">
-        <a href="/" class="text-blue-600 hover:text-blue-800">← All Proposals</a>
+<div class="animate-fade-in">
+    <!-- Breadcrumb Navigation -->
+    <nav class="mb-4" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="/" class="text-primary-600 hover:text-primary-800 hover:underline focus:underline">
+                    All Proposals
+                </a>
+            </li>
+            <li aria-hidden="true" class="text-gray-400">›</li>
+            <li aria-current="page" class="text-gray-700 font-medium truncate">{{ proposal.title }}</li>
+        </ol>
     </nav>
 
     <!-- Proposal Header -->
-    <div class="collective-card mb-6">
-        <div class="flex justify-between items-start mb-4">
-            <h2 class="text-2xl font-bold text-gray-900">{{ proposal.title }}</h2>
-            <span class="collective-badge bg-gray-100 text-gray-800">
-                {{ proposal.status | status_emoji }} {{ proposal.status }}
-            </span>
-        </div>
-        
-        <p class="text-gray-700 mb-4">{{ proposal.description }}</p>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+    <article class="collective-card mb-6">
+        <header class="mb-4">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ proposal.title }}</h1>
+                <span class="collective-badge bg-gray-100 text-gray-800 flex-shrink-0"
+                      aria-label="Status: {{ proposal.status }}">
+                    <span aria-hidden="true">{{ proposal.status | status_emoji }}</span>
+                    <span class="ml-1">{{ proposal.status }}</span>
+                </span>
+            </div>
+
+            <p class="text-gray-700 text-base leading-relaxed">{{ proposal.description }}</p>
+        </header>
+
+        <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
-                <span class="font-medium text-gray-500">Proposer:</span>
-                <p class="text-gray-900">{{ proposal.proposer }}</p>
+                <dt class="font-medium text-gray-500 mb-1">Proposer:</dt>
+                <dd class="text-gray-900">{{ proposal.proposer }}</dd>
             </div>
             <div>
-                <span class="font-medium text-gray-500">Date:</span>
-                <p class="text-gray-900">{{ proposal.date | humanize_date }}</p>
+                <dt class="font-medium text-gray-500 mb-1">Date:</dt>
+                <dd class="text-gray-900">
+                    <time datetime="{{ proposal.date }}">{{ proposal.date | humanize_date }}</time>
+                </dd>
             </div>
             <div>
-                <span class="font-medium text-gray-500">Urgency:</span>
-                <p class="{{ proposal.urgency | urgency_color }} font-medium">{{ proposal.urgency }}</p>
+                <dt class="font-medium text-gray-500 mb-1">Urgency:</dt>
+                <dd class="{{ proposal.urgency | urgency_color }} font-medium">{{ proposal.urgency }}</dd>
             </div>
             <div>
-                <span class="font-medium text-gray-500">ID:</span>
-                <p class="text-gray-900 font-mono text-xs">{{ proposal.id }}</p>
+                <dt class="font-medium text-gray-500 mb-1">ID:</dt>
+                <dd class="text-gray-900 font-mono text-xs break-all">{{ proposal.id }}</dd>
             </div>
-        </div>
+        </dl>
 
         {% if proposal.affected_areas %}
         <div class="mt-4">
-            <span class="font-medium text-gray-500 text-sm">Affected Areas:</span>
-            <div class="mt-1 flex flex-wrap gap-2">
+            <span class="font-medium text-gray-500 text-sm block mb-2">Affected Areas:</span>
+            <div class="flex flex-wrap gap-2" role="list">
                 {% for area in proposal.affected_areas %}
-                <span class="collective-badge bg-blue-50 text-blue-700">{{ area }}</span>
+                <span class="collective-badge bg-blue-50 text-blue-700" role="listitem">{{ area }}</span>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
-    </div>
+    </article>
 
     <!-- Consensus Status -->
     {% if proposal.consensus_status %}
-    <div class="collective-card mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-3">Consensus Status</h3>
+    <section class="collective-card mb-6" aria-labelledby="consensus-status-heading">
+        <h2 id="consensus-status-heading" class="text-lg font-semibold text-gray-900 mb-3">
+            Consensus Status
+        </h2>
         <p class="text-gray-700">{{ proposal.consensus_status }}</p>
-    </div>
+    </section>
     {% endif %}
 
     <!-- Consultations -->
     {% if proposal.consultations %}
-    <div class="collective-card mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
-            Consultations ({{ proposal.consultations | length }})
-        </h3>
-        
-        <div class="space-y-4">
+    <section class="collective-card mb-6" aria-labelledby="consultations-heading">
+        <h2 id="consultations-heading" class="text-lg font-semibold text-gray-900 mb-4">
+            Consultations
+            <span class="text-gray-500 font-normal">({{ proposal.consultations | length }})</span>
+        </h2>
+
+        <div class="space-y-4" role="list">
             {% for consultation in proposal.consultations %}
-            <div class="border-l-4 {% if consultation.support %}border-green-400{% else %}border-red-400{% endif %} pl-4">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
+            <article class="border-l-4 {% if consultation.support %}border-green-400{% else %}border-red-400{% endif %} pl-4 py-2"
+                     role="listitem">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+                    <div class="flex-1">
                         <span class="font-medium text-gray-900">{{ consultation.contributor }}</span>
-                        <span class="text-sm text-gray-500 ml-2">
-                            {{ consultation.timestamp | humanize_date }}
+                        <span class="text-sm text-gray-500 block sm:inline sm:ml-2">
+                            <time datetime="{{ consultation.timestamp }}">
+                                {{ consultation.timestamp | humanize_date }}
+                            </time>
                         </span>
                     </div>
-                    <span class="text-sm">
+                    <span class="text-sm flex-shrink-0">
                         {% if consultation.support %}
-                        <span class="text-green-600">✓ Supports</span>
+                        <span class="text-green-600 font-medium inline-flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Supports
+                        </span>
                         {% else %}
-                        <span class="text-red-600">✗ Does not support</span>
+                        <span class="text-red-600 font-medium inline-flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Does not support
+                        </span>
                         {% endif %}
                     </span>
                 </div>
-                
-                <p class="text-gray-700">{{ consultation.input }}</p>
-                
+
+                <p class="text-gray-700 leading-relaxed mb-2">{{ consultation.input }}</p>
+
                 {% if consultation.concerns %}
-                <div class="mt-2">
-                    <span class="text-sm font-medium text-gray-500">Concerns:</span>
-                    <ul class="list-disc list-inside text-sm text-gray-600 mt-1">
+                <div class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded">
+                    <span class="text-sm font-medium text-amber-900 block mb-1">Concerns:</span>
+                    <ul class="list-disc list-inside text-sm text-amber-800 space-y-1">
                         {% for concern in consultation.concerns %}
                         <li>{{ concern }}</li>
                         {% endfor %}
                     </ul>
                 </div>
                 {% endif %}
-            </div>
+            </article>
             {% endfor %}
         </div>
 
         <!-- Consensus Summary -->
-        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h4 class="font-medium text-gray-900 mb-2">Consultation Summary</h4>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                    <span class="text-green-600">
-                        ✓ {{ proposal.consultations | selectattr('support') | list | length }} Support
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200" role="region" aria-labelledby="summary-heading">
+            <h3 id="summary-heading" class="font-medium text-gray-900 mb-3">Consultation Summary</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-3">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-green-700 font-medium">
+                        {{ proposal.consultations | selectattr('support') | list | length }} Support
                     </span>
                 </div>
-                <div>
-                    <span class="text-red-600">
-                        ✗ {{ proposal.consultations | rejectattr('support') | list | length }} Do not support
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="text-red-700 font-medium">
+                        {{ proposal.consultations | rejectattr('support') | list | length }} Do not support
                     </span>
                 </div>
             </div>
-            
+
             {% set support_count = proposal.consultations | selectattr('support') | list | length %}
             {% set total_count = proposal.consultations | length %}
             {% if total_count > 0 and support_count == total_count %}
-            <p class="mt-2 text-sm text-green-600 font-medium">
-                ✅ Unanimous support from all consultations
-            </p>
+            <div class="p-3 bg-green-50 border border-green-200 rounded" role="status">
+                <p class="text-sm text-green-700 font-medium flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Unanimous support from all consultations
+                </p>
+            </div>
             {% elif total_count > 0 %}
-            <p class="mt-2 text-sm text-yellow-600">
-                ⚠️ Not all consultations support this proposal
-            </p>
+            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded" role="status">
+                <p class="text-sm text-yellow-700 font-medium flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    Not all consultations support this proposal
+                </p>
+            </div>
             {% endif %}
         </div>
-    </div>
+    </section>
     {% endif %}
 
     <!-- Decision -->
     {% if proposal.decision %}
-    <div class="collective-card mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-3">Collective Decision</h3>
-        <div class="p-4 bg-gray-50 rounded-lg">
-            <div class="flex justify-between items-start mb-2">
+    <section class="collective-card mb-6" aria-labelledby="decision-heading">
+        <h2 id="decision-heading" class="text-lg font-semibold text-gray-900 mb-3">Collective Decision</h2>
+        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                 <span class="font-medium text-gray-900">
-                    Result: {{ proposal.decision.result }}
+                    Result: <strong>{{ proposal.decision.result }}</strong>
                 </span>
                 <span class="text-sm text-gray-500">
-                    {{ proposal.decision.timestamp | humanize_date }}
+                    <time datetime="{{ proposal.decision.timestamp }}">
+                        {{ proposal.decision.timestamp | humanize_date }}
+                    </time>
                 </span>
             </div>
             {% if proposal.decision.rationale %}
-            <p class="text-gray-700">{{ proposal.decision.rationale }}</p>
+            <p class="text-gray-700 leading-relaxed">{{ proposal.decision.rationale }}</p>
             {% endif %}
         </div>
-    </div>
+    </section>
     {% endif %}
 
     <!-- Consensus History -->
     {% if proposal.consensus_history %}
-    <div class="collective-card">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Process History</h3>
-        
-        <div class="space-y-3">
+    <section class="collective-card mb-6" aria-labelledby="history-heading">
+        <h2 id="history-heading" class="text-lg font-semibold text-gray-900 mb-4">Process History</h2>
+
+        <ol class="space-y-3" role="list">
             {% for event in proposal.consensus_history | reverse %}
-            <div class="flex items-start space-x-3">
-                <div class="flex-shrink-0 w-2 h-2 bg-gray-400 rounded-full mt-2"></div>
-                <div class="flex-1">
+            <li class="flex items-start space-x-3">
+                <div class="flex-shrink-0 w-2 h-2 bg-primary-400 rounded-full mt-2" aria-hidden="true"></div>
+                <div class="flex-1 min-w-0">
                     <div class="text-sm">
                         <span class="font-medium text-gray-900">{{ event.event | replace('_', ' ') | title }}</span>
                         {% if event.actor %}
-                        <span class="text-gray-500">by {{ event.actor }}</span>
+                        <span class="text-gray-500">by <strong>{{ event.actor }}</strong></span>
                         {% endif %}
                     </div>
                     {% if event.details %}
-                    <p class="text-sm text-gray-600">{{ event.details }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ event.details }}</p>
                     {% endif %}
-                    <p class="text-xs text-gray-400 mt-1">{{ event.timestamp | humanize_date }}</p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        <time datetime="{{ event.timestamp }}">{{ event.timestamp | humanize_date }}</time>
+                    </p>
                 </div>
-            </div>
+            </li>
             {% endfor %}
-        </div>
-    </div>
+        </ol>
+    </section>
     {% endif %}
 
     <!-- CLI Instructions -->
-    <div class="mt-8 p-4 bg-blue-50 rounded-lg">
-        <h4 class="text-sm font-medium text-blue-900 mb-2">Participate via CLI</h4>
-        <pre class="text-xs bg-white p-2 rounded border border-blue-200 overflow-x-auto"><code>./collectiveflow consensus input {{ proposal.id }} --contributor "your-name" --input "Your consultation input"</code></pre>
-    </div>
+    <aside class="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200" aria-labelledby="cli-heading">
+        <h2 id="cli-heading" class="text-sm font-medium text-blue-900 mb-2">Participate via Command Line</h2>
+        <p class="text-xs text-blue-700 mb-2">Add your consultation using the CollectiveFlow CLI:</p>
+        <pre class="text-xs bg-white p-3 rounded border border-blue-300 overflow-x-auto" role="text"><code>./collectiveflow consensus input {{ proposal.id }} --contributor "your-name" --input "Your consultation input"</code></pre>
+    </aside>
 </div>
 {% endblock %}

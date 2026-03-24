@@ -1,7 +1,7 @@
 # Bluesky Collective Makefile
 # Build system for consensus-based Bluesky client
 
-.PHONY: all build test clean install lint fmt vet deps help
+.PHONY: all build test clean install lint fmt vet deps help run setup status
 
 # Build configuration
 BINARY_NAME=bluesky-collective
@@ -103,11 +103,37 @@ demo: build
 	@echo "  $(BUILD_DIR)/$(BINARY_NAME) status"
 	@echo "  $(BUILD_DIR)/$(BINARY_NAME) vote --proposal proposal-123 --position support --reasoning 'Good first post'"
 
+# Run the CLI with arguments (usage: make run ARGS="status")
+run: build
+	$(BUILD_DIR)/$(BINARY_NAME) $(ARGS)
+
+# Install all dependencies (alias for deps)
+setup: deps
+
+# Show project status
+status:
+	@echo "=== Bluesky Collective Status ==="
+	@echo ""
+	@go version 2>/dev/null || echo "Go not installed"
+	@echo ""
+	@if [ -f "$(BUILD_DIR)/$(BINARY_NAME)" ]; then \
+		echo "Binary: built ($(BUILD_DIR)/$(BINARY_NAME))"; \
+	else \
+		echo "Binary: not built (run 'make build')"; \
+	fi
+	@echo ""
+	@go mod verify 2>/dev/null && echo "Dependencies: verified" || echo "Dependencies: not verified (run 'make deps')"
+
 # Show help
 help:
+	@echo "Bluesky Collective — Consensus-Based Bluesky Client"
+	@echo ""
 	@echo "Available targets:"
 	@echo "  build      Build the binary"
 	@echo "  test       Run tests"
+	@echo "  run        Build and run (usage: make run ARGS='status')"
+	@echo "  setup      Install dependencies"
+	@echo "  status     Show project status"
 	@echo "  coverage   Run tests with coverage report"
 	@echo "  clean      Clean build artifacts"
 	@echo "  install    Install binary to system"

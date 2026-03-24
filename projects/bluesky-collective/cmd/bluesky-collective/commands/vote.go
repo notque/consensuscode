@@ -2,7 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -10,7 +10,7 @@ import (
 	"github.com/consensuscode/bluesky-collective/pkg/consensus"
 )
 
-// NewVoteCmd creates the vote command for participating in consensus
+// NewVoteCmd creates the vote command for participating in consensus.
 func NewVoteCmd(logger *zap.Logger) *cobra.Command {
 	var (
 		proposalID string
@@ -33,28 +33,11 @@ Consensus positions:
 Example:
   bluesky-collective vote --proposal proposal-123 --position support --reasoning "This clearly represents our collective values"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Validate position
 			pos := consensus.Position(position)
-			validPositions := []consensus.Position{
-				consensus.PositionSupport,
-				consensus.PositionBlock,
-				consensus.PositionStandAside,
-				consensus.PositionAbstain,
-			}
-			
-			valid := false
-			for _, validPos := range validPositions {
-				if pos == validPos {
-					valid = true
-					break
-				}
-			}
-			
-			if !valid {
+			if !isValidPosition(pos) {
 				return fmt.Errorf("invalid position: %s. Must be one of: support, block, stand_aside, abstain", position)
 			}
 
-			// Require reasoning for blocks and stand_aside
 			if pos == consensus.PositionBlock && reasoning == "" {
 				return fmt.Errorf("reasoning is required when blocking a proposal")
 			}
@@ -65,36 +48,67 @@ Example:
 			logger.Info("Recording vote on proposal",
 				zap.String("proposal_id", proposalID),
 				zap.String("position", position),
-				zap.String("reasoning", reasoning),
 			)
 
-			// TODO: Submit vote to consensus system
-			
+			checker, err := newConsensusChecker()
+			if err != nil {
+				return fmt.Errorf("initialize consensus checker: %w", err)
+			}
+
+			vote := consensus.Vote{
+				AgentID:   currentAgentID(),
+				Position:  pos,
+				Reasoning: reasoning,
+				Concerns:  concerns,
+				VotedAt:   time.Now(),
+			}
+
+			if err := checker.RecordVote(cmd.Context(), proposalID, vote); err != nil {
+				return fmt.Errorf("record vote: %w", err)
+			}
+
+			// Check updated status
+			decision, err := checker.GetDecision(cmd.Context(), proposalID)
+			if err != nil {
+				return fmt.Errorf("get decision status: %w", err)
+			}
+
 			fmt.Printf("Vote recorded for proposal %s:\n", proposalID)
-			fmt.Printf("Position: %s\n", strings.Title(position))
+			fmt.Printf("  Agent: %s\n", vote.AgentID)
+			fmt.Printf("  Position: %s\n", position)
 			if reasoning != "" {
-				fmt.Printf("Reasoning: %s\n", reasoning)
+				fmt.Printf("  Reasoning: %s\n", reasoning)
 			}
 			if len(concerns) > 0 {
-				fmt.Printf("Concerns:\n")
+				fmt.Printf("  Concerns:\n")
 				for _, concern := range concerns {
-					fmt.Printf("  - %s\n", concern)
+					fmt.Printf("    - %s\n", concern)
 				}
 			}
-			fmt.Printf("\nVote submitted. Use 'bluesky-collective status' to check consensus progress.\n")
+			fmt.Printf("\n  Decision status: %s\n", decision.Status)
+			fmt.Printf("  Votes so far: %d\n", len(decision.AgentVotes))
 
 			return nil
 		},
 	}
 
-	// Flags
 	cmd.Flags().StringVarP(&proposalID, "proposal", "p", "", "Proposal ID to vote on (required)")
 	cmd.Flags().StringVar(&position, "position", "", "Your position: support, block, stand_aside, abstain (required)")
 	cmd.Flags().StringVarP(&reasoning, "reasoning", "r", "", "Reasoning for your position")
-	cmd.Flags().StringSliceVar(&concerns, "concerns", nil, "List of specific concerns (used with block or stand_aside)")
+	cmd.Flags().StringSliceVar(&concerns, "concerns", nil, "List of specific concerns")
 
 	cmd.MarkFlagRequired("proposal")
 	cmd.MarkFlagRequired("position")
 
 	return cmd
+}
+
+func isValidPosition(pos consensus.Position) bool {
+	switch pos {
+	case consensus.PositionSupport, consensus.PositionBlock,
+		consensus.PositionStandAside, consensus.PositionAbstain:
+		return true
+	default:
+		return false
+	}
 }

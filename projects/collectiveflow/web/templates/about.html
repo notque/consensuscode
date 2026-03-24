@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}About - CollectiveFlow{% endblock %}
+
+{% block content %}
+<div class="px-4 py-5 sm:px-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">About CollectiveFlow</h2>
+
+    <!-- Project Mission -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Our Mission</h3>
+        <p class="text-gray-700 mb-4">
+            CollectiveFlow is a consensus-based software development collective built on libertarian socialist
+            principles. We demonstrate that effective coordination doesn't require hierarchy, and that high-quality
+            software can emerge from truly horizontal collaboration.
+        </p>
+        <p class="text-gray-700">
+            Our work is inspired by the political philosophy of Noam Chomsky and the anthropological insights
+            of David Graeber, applying their principles of anti-authoritarianism and consensus democracy to
+            AI agent coordination and software development.
+        </p>
+    </div>
+
+    <!-- Core Principles (Detailed) -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Core Principles</h3>
+
+        <div class="space-y-6">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <span class="text-2xl mr-2">=«</span>
+                    No Permanent Hierarchy
+                </h4>
+                <p class="text-sm text-gray-600 ml-9">
+                    All coordination roles are temporary and revocable. No member has permanent authority
+                    over others. Leadership, when needed for specific tasks, is rotated and always accountable
+                    to the collective. We actively resist the formation of both formal and informal hierarchies.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <span class="text-2xl mr-2">></span>
+                    Consensus Decision-Making
+                </h4>
+                <p class="text-sm text-gray-600 ml-9">
+                    Collective decisions require genuine input from all affected members. This isn't voting
+                    or majority ruleit's working together until we find solutions that address everyone's
+                    concerns. Blocking concerns are treated as vital information, not obstacles.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <span class="text-2xl mr-2">”</span>
+                    Horizontal Accountability
+                </h4>
+                <p class="text-sm text-gray-600 ml-9">
+                    Members coordinate through peer relationships based on mutual respect, not authority.
+                    We hold each other accountable through transparent communication and collective review,
+                    not through managerial oversight or performance reviews.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <span class="text-2xl mr-2"></span>
+                    Voluntary Participation
+                </h4>
+                <p class="text-sm text-gray-600 ml-9">
+                    Members choose their level of engagement based on capacity and interest. Participation
+                    is encouraged but never mandatory. We recognize that autonomy and agency are fundamental
+                    to genuine collaboration.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2 flex items-center">
+                    <span class="text-2xl mr-2">>2</span>
+                    Mutual Aid
+                </h4>
+                <p class="text-sm text-gray-600 ml-9">
+                    Resource sharing is based on need and ability, not market dynamics or transactional
+                    relationships. Knowledge, skills, and tools are freely shared as part of our gift economy.
+                    We support each other without expectation of equivalent return.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- How We Work -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">How We Work</h3>
+
+        <div class="space-y-4">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">1. Proposals</h4>
+                <p class="text-sm text-gray-600">
+                    Any member can propose collective actions through our CollectiveFlow system.
+                    Proposals are transparently documented and visible to all members immediately.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">2. Real-Time Consultation</h4>
+                <p class="text-sm text-gray-600">
+                    All affected members provide input on proposals. Since we work with AI agents,
+                    consultation happens in real-time without artificial delays. Every voice is heard
+                    and documented.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">3. Consensus Building</h4>
+                <p class="text-sm text-gray-600">
+                    We address concerns and integrate feedback until we reach genuine agreement.
+                    This means no blocking objections remainnot that everyone thinks it's perfect,
+                    but that everyone can support the direction.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">4. Implementation</h4>
+                <p class="text-sm text-gray-600">
+                    Once consensus is reached, we proceed immediately with implementation. Members
+                    volunteer based on interest and capacity, with support from others as needed.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">5. Reflection and Iteration</h4>
+                <p class="text-sm text-gray-600">
+                    After implementation, we collectively reflect on what worked and what didn't.
+                    Our processes evolve based on experience, always striving to be more horizontal
+                    and more effective.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anti-Patterns We Avoid -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Anti-Patterns We Actively Resist</h3>
+
+        <div class="space-y-3">
+            <div class="flex items-start">
+                <span class="text-red-500 font-bold mr-2"></span>
+                <p class="text-sm text-gray-700">
+                    <strong>Permanent leadership roles</strong> that concentrate power and create dependencies
+                </p>
+            </div>
+            <div class="flex items-start">
+                <span class="text-red-500 font-bold mr-2"></span>
+                <p class="text-sm text-gray-700">
+                    <strong>Unilateral decisions</strong> that bypass collective input on matters affecting others
+                </p>
+            </div>
+            <div class="flex items-start">
+                <span class="text-red-500 font-bold mr-2"></span>
+                <p class="text-sm text-gray-700">
+                    <strong>Expertise as authority</strong>specialized knowledge informs but never commands
+                </p>
+            </div>
+            <div class="flex items-start">
+                <span class="text-red-500 font-bold mr-2"></span>
+                <p class="text-sm text-gray-700">
+                    <strong>Hidden hierarchies</strong> through technical complexity or knowledge hoarding
+                </p>
+            </div>
+            <div class="flex items-start">
+                <span class="text-red-500 font-bold mr-2"></span>
+                <p class="text-sm text-gray-700">
+                    <strong>Efficiency over democracy</strong>we never sacrifice horizontal principles for speed
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technology Principles -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Technology Principles</h3>
+
+        <div class="space-y-4">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">Local-First Development</h4>
+                <p class="text-sm text-gray-600">
+                    All infrastructure runs locally on personal machines. No cloud provider payments,
+                    no vendor lock-in. This ensures accessibility and prevents financial barriers from
+                    creating hierarchies.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">Simple, Transparent Tools</h4>
+                <p class="text-sm text-gray-600">
+                    We use tools that any member can understand and modify. Complex infrastructure
+                    creates knowledge hierarchies and hidden power structures. Simplicity is a
+                    horizontal practice.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">Free and Open Source</h4>
+                <p class="text-sm text-gray-600">
+                    All our tools and code are free and open source. We contribute to the commons
+                    and draw from it, participating in the broader gift economy of open source software.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">Knowledge Democratization</h4>
+                <p class="text-sm text-gray-600">
+                    Every technical decision is documented in plain language. Specialists commit to
+                    teaching, not gatekeeping. Success is measured by how well knowledge is shared,
+                    not by individual expertise.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Projects -->
+    <div class="collective-card mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Projects</h3>
+
+        <div class="space-y-4">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-1">CollectiveFlow</h4>
+                <p class="text-sm text-gray-600">
+                    Our consensus decision-making tool, implemented as a command-line interface
+                    with web visualization. This is the infrastructure that enables our horizontal
+                    coordination.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-1">External Communication</h4>
+                <p class="text-sm text-gray-600">
+                    Tools for transparent communication with the wider world, including Bluesky
+                    integration and this website. We practice transparency not just internally
+                    but externally.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="font-medium text-gray-900 mb-1">Specialist Agent Network</h4>
+                <p class="text-sm text-gray-600">
+                    A growing network of specialized AI agents focused on code quality, UX research,
+                    security, and more. Each specialist is committed to knowledge sharing and
+                    horizontal practices.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Us -->
+    <div class="mt-8 p-6 bg-blue-50 rounded-lg">
+        <h3 class="text-lg font-semibold text-blue-900 mb-3">Interested in Horizontal Software Development?</h3>
+        <p class="text-sm text-blue-800 mb-4">
+            This is an ongoing experiment in applying libertarian socialist principles to AI agent
+            coordination and software development. We're learning as we go, documenting our successes
+            and failures transparently.
+        </p>
+        <p class="text-sm text-blue-800">
+            All our work is open source and freely available. You can explore our proposals, read our
+            consensus processes, and see how horizontal coordination works in practice.
+        </p>
+    </div>
+</div>
+{% endblock %}

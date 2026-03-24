@@ -2,17 +2,15 @@ package commands
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
 
-// NewStatusCmd creates the status command for checking consensus state
+// NewStatusCmd creates the status command for checking consensus state.
 func NewStatusCmd(logger *zap.Logger) *cobra.Command {
 	var (
 		proposalID string
-		listAll    bool
 	)
 
 	cmd := &cobra.Command{
@@ -29,62 +27,87 @@ Example:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			logger.Info("Checking consensus status",
 				zap.String("proposal_id", proposalID),
-				zap.Bool("list_all", listAll),
 			)
+
+			checker, err := newConsensusChecker()
+			if err != nil {
+				return fmt.Errorf("initialize consensus checker: %w", err)
+			}
 
 			if proposalID != "" {
 				// Show detailed status for specific proposal
-				showProposalStatus(proposalID)
+				proposal, err := checker.GetProposal(cmd.Context(), proposalID)
+				if err != nil {
+					return fmt.Errorf("get proposal: %w", err)
+				}
+
+				decision, err := checker.GetDecision(cmd.Context(), proposalID)
+				if err != nil {
+					return fmt.Errorf("get decision: %w", err)
+				}
+
+				fmt.Printf("Proposal: %s\n", proposal.ID)
+				fmt.Printf("  Status: %s\n", decision.Status)
+				fmt.Printf("  Text: %q\n", proposal.Content)
+				fmt.Printf("  Proposed by: %s\n", proposal.ProposedBy)
+				fmt.Printf("  Reasoning: %s\n", proposal.Reasoning)
+				fmt.Printf("  Proposed at: %s\n", proposal.ProposedAt.Format("2006-01-02 15:04:05"))
+				fmt.Printf("  Expires at: %s\n", proposal.ExpiresAt.Format("2006-01-02 15:04:05"))
+				fmt.Printf("\nVotes (%d):\n", len(decision.AgentVotes))
+
+				if len(decision.AgentVotes) == 0 {
+					fmt.Printf("  (no votes yet)\n")
+				}
+				for agentID, vote := range decision.AgentVotes {
+					fmt.Printf("  %s: %s", agentID, vote.Position)
+					if vote.Reasoning != "" {
+						fmt.Printf(" - %q", vote.Reasoning)
+					}
+					fmt.Println()
+				}
+
+				if decision.ConsensusAt != nil {
+					fmt.Printf("\nConsensus reached at: %s\n", decision.ConsensusAt.Format("2006-01-02 15:04:05"))
+				}
 			} else {
 				// Show all pending proposals
-				showAllProposals()
+				proposals, err := checker.ListPendingProposals(cmd.Context())
+				if err != nil {
+					return fmt.Errorf("list proposals: %w", err)
+				}
+
+				if len(proposals) == 0 {
+					fmt.Println("No pending proposals.")
+					fmt.Println("\nUse 'bluesky-collective propose' to create one.")
+					return nil
+				}
+
+				fmt.Printf("Pending Proposals (%d):\n\n", len(proposals))
+				for i, proposal := range proposals {
+					decision, err := checker.GetDecision(cmd.Context(), proposal.ID)
+					voteCount := 0
+					status := "unknown"
+					if err == nil {
+						voteCount = len(decision.AgentVotes)
+						status = string(decision.Status)
+					}
+
+					fmt.Printf("%d. %s\n", i+1, proposal.ID)
+					fmt.Printf("   Text: %q\n", proposal.Content)
+					fmt.Printf("   Status: %s (%d votes)\n", status, voteCount)
+					fmt.Printf("   Proposed by: %s\n", proposal.ProposedBy)
+					fmt.Printf("   Expires: %s\n\n", proposal.ExpiresAt.Format("2006-01-02 15:04"))
+				}
+
+				fmt.Println("Use 'bluesky-collective status --proposal <id>' for details.")
+				fmt.Println("Use 'bluesky-collective vote --proposal <id> --position <position>' to participate.")
 			}
 
 			return nil
 		},
 	}
 
-	// Flags
 	cmd.Flags().StringVarP(&proposalID, "proposal", "p", "", "Show status for specific proposal")
-	cmd.Flags().BoolVar(&listAll, "all", false, "Include completed proposals")
 
 	return cmd
-}
-
-func showProposalStatus(proposalID string) {
-	// TODO: Fetch actual proposal data from consensus system
-	
-	fmt.Printf("Proposal: %s\n", proposalID)
-	fmt.Printf("Status: Pending consensus\n")
-	fmt.Printf("Text: \"Hello from the collective!\"\n")
-	fmt.Printf("Proposed by: go-systems-developer\n")
-	fmt.Printf("Proposed at: %s\n", time.Now().Add(-2*time.Hour).Format("2006-01-02 15:04:05"))
-	fmt.Printf("Expires at: %s\n", time.Now().Add(22*time.Hour).Format("2006-01-02 15:04:05"))
-	fmt.Printf("\nConsensus Progress:\n")
-	fmt.Printf("  Total agents: 5\n")
-	fmt.Printf("  Votes received: 2/5\n")
-	fmt.Printf("  Support: 2\n")
-	fmt.Printf("  Block: 0\n")
-	fmt.Printf("  Stand aside: 0\n")
-	fmt.Printf("  Abstain: 0\n")
-	fmt.Printf("  Not yet voted: product-steward, flask-web-developer, devops-coordinator\n")
-	fmt.Printf("\nVotes:\n")
-	fmt.Printf("  go-systems-developer: Support - \"Aligns with our principles\"\n")
-	fmt.Printf("  consensus-coordinator: Support - \"Clear and appropriate\"\n")
-	fmt.Printf("\nConsensus needed from remaining agents to proceed.\n")
-}
-
-func showAllProposals() {
-	fmt.Printf("Pending Proposals:\n\n")
-	
-	// TODO: Fetch actual proposals from consensus system
-	
-	fmt.Printf("1. Proposal: proposal-%d\n", time.Now().Unix())
-	fmt.Printf("   Text: \"Hello from the collective!\"\n")
-	fmt.Printf("   Status: Pending (2/5 votes)\n")
-	fmt.Printf("   Expires: %s\n", time.Now().Add(22*time.Hour).Format("2006-01-02 15:04"))
-	fmt.Printf("   Proposed by: go-systems-developer\n\n")
-	
-	fmt.Printf("Use 'bluesky-collective status --proposal <id>' for detailed information.\n")
-	fmt.Printf("Use 'bluesky-collective vote --proposal <id> --position <position>' to participate.\n")
 }

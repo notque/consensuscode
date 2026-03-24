@@ -1,0 +1,27 @@
+# CollectiveFlow Docker Compose — Local Development Only
+# Runs the Flask web interface in a container. No cloud needed.
+#
+# Usage:
+#   docker compose up        — start the web interface
+#   docker compose down      — stop everything
+#   docker compose build     — rebuild after code changes
+#
+# The Go CLI is NOT containerized — build it natively with `make build`.
+
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount data directory so proposals are persisted on the host
+      - ./data:/app/data
+      # Mount templates for live editing during development
+      - ./web/templates:/app/templates
+    environment:
+      - FLASK_ENV=development
+      - COLLECTIVEFLOW_DATA=/app/data
+      - SECRET_KEY=collective-flow-dev-key
+    restart: unless-stopped

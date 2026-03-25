@@ -245,6 +245,79 @@ def create_proposal():
         flash(f'Error creating proposal: {str(e)}', 'error')
         return redirect(url_for('create_proposal_form'))
 
+@app.route('/proposal/<proposal_id>/consult', methods=['POST'])
+def add_consultation(proposal_id):
+    """Handle consultation input submission for a proposal."""
+    proposal = get_proposal(proposal_id)
+
+    if not proposal:
+        return "Proposal not found", 404
+
+    try:
+        contributor = request.form.get('contributor', '').strip() or 'anonymous'
+        position = request.form.get('position', 'support')
+        comment = request.form.get('comment', '').strip()
+        concerns = request.form.get('concerns', '').strip()
+        suggestions = request.form.get('suggestions', '').strip()
+
+        # Validate required fields
+        if not comment:
+            flash('Comment is required — your reasoning matters to the collective.', 'error')
+            return redirect(url_for('proposal_detail', proposal_id=proposal_id) + '#consultation-form')
+
+        if position not in ('support', 'support-with-concerns', 'block'):
+            flash('Invalid position selected.', 'error')
+            return redirect(url_for('proposal_detail', proposal_id=proposal_id) + '#consultation-form')
+
+        # Build consultation entry
+        consultation = {
+            'contributor': contributor,
+            'position': position,
+            'support': position in ('support', 'support-with-concerns'),
+            'input': comment,
+            'timestamp': datetime.now().isoformat(),
+        }
+
+        if concerns:
+            consultation['concerns'] = [c.strip() for c in concerns.split('\n') if c.strip()]
+
+        if suggestions:
+            consultation['suggestions'] = [s.strip() for s in suggestions.split('\n') if s.strip()]
+
+        # Append to proposal consultations
+        if 'consultations' not in proposal:
+            proposal['consultations'] = []
+        proposal['consultations'].append(consultation)
+
+        # Add to consensus history
+        if 'consensus_history' not in proposal:
+            proposal['consensus_history'] = []
+        proposal['consensus_history'].append({
+            'timestamp': consultation['timestamp'],
+            'event': 'consultation_added',
+            'actor': contributor,
+            'details': f"Position: {position}"
+        })
+
+        # Save updated proposal
+        yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
+        with open(yaml_path, 'w') as f:
+            yaml.safe_dump(proposal, f, default_flow_style=False, sort_keys=False)
+
+        # Also update JSON for API compatibility
+        json_path = PROPOSALS_DIR / f"{proposal_id}.json"
+        if json_path.exists():
+            with open(json_path, 'w') as f:
+                json.dump(proposal, f, indent=2, default=str)
+
+        flash(f'Consultation input from "{contributor}" recorded. Thank you for participating!', 'success')
+        return redirect(url_for('proposal_detail', proposal_id=proposal_id) + '#consultations-heading')
+
+    except Exception as e:
+        flash(f'Error submitting consultation: {str(e)}', 'error')
+        return redirect(url_for('proposal_detail', proposal_id=proposal_id))
+
+
 @app.template_filter('humanize_date')
 def humanize_date(date_str):
     """Convert ISO date string to human-readable format."""

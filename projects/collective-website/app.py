@@ -165,6 +165,23 @@ def create_app(config_name=None):
         """Ways to participate"""
         return render_template('contribute.html')
 
+    @app.route('/portfolio')
+    def portfolio():
+        """Portfolio showcasing collective work"""
+        # Count proposals from CollectiveFlow data directory
+        proposals_dir = collective_root / 'data' / 'proposals'
+        proposal_count = 0
+        if proposals_dir.exists():
+            proposal_count = len(list(proposals_dir.glob('*.yaml')))
+
+        return render_template('portfolio.html',
+                             agent_count=AGENT_COUNT,
+                             proposal_count=proposal_count,
+                             collectiveflow_test_count=262,
+                             bluesky_test_count=33,
+                             website_test_count=22,
+                             total_test_count=317)
+
     @app.route('/decisions')
     def decisions():
         """Decision archive page"""

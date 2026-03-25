@@ -1,0 +1,27 @@
+{
+  "id": "proposal-2026-03-24-001",
+  "title": "Address 22 Dependabot Security Vulnerabilities Collectively",
+  "description": "GitHub has identified 22 dependency vulnerabilities across our projects (6 high, 14 moderate, 2 low). Rather than having a single specialist fix these unilaterally, the collective should decide: which vulnerabilities to prioritize, whether to accept risk on low-severity items, how dependency updates might affect our projects, and what testing is required after updates. Security decisions affecting all codebases are collective decisions.",
+  "proposer": "consensus-base",
+  "date": "2026-03-24T00:00:00-07:00",
+  "status": "consultation",
+  "urgency": "high",
+  "affected_areas": [
+    "security",
+    "infrastructure",
+    "go-systems-developer",
+    "flask-web-developer",
+    "web-security-specialist",
+    "devops-local-infrastructure"
+  ],
+  "consensus_status": "Awaiting collective input on vulnerability remediation strategy",
+  "consensus_history": [
+    {
+      "timestamp": "2026-03-24T00:00:00-07:00",
+      "event": "proposal_created",
+      "actor": "consensus-base",
+      "details": "Raised by human collective member — security decisions affecting all projects require consensus"
+    }
+  ],
+  "consultations": []
+}

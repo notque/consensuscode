@@ -175,26 +175,31 @@ def temp_data_dir(monkeypatch):
     with real data or each other. This embodies our principle of isolation -
     each test runs in its own clean environment.
 
+    After creating the directory, this fixture swaps the app's storage backend
+    to a fresh YAMLStorage instance pointing at the temp directory. This
+    ensures that all routes (which call storage.load_proposals(), etc.)
+    operate on the test data, regardless of which backend is configured
+    globally.
+
     The directory is automatically cleaned up after the test completes.
 
     Args:
         monkeypatch: Pytest's monkeypatch fixture for environment modification
 
     Yields:
-        Path: Path to temporary data directory
+        Path: Path to temporary proposals directory (inside the temp data dir)
     """
     # Create temporary directory
     temp_dir = tempfile.mkdtemp(prefix='collectiveflow_test_')
     proposals_dir = Path(temp_dir) / 'proposals'
     proposals_dir.mkdir(parents=True, exist_ok=True)
 
-    # Configure app to use temp directory
+    # Configure app to use temp directory via storage backend
     monkeypatch.setenv('COLLECTIVEFLOW_DATA', temp_dir)
 
-    # Import app module to ensure it picks up the new environment variable
     import app as app_module
-    monkeypatch.setattr(app_module, 'DATA_DIR', temp_dir)
-    monkeypatch.setattr(app_module, 'PROPOSALS_DIR', proposals_dir)
+    from storage import YAMLStorage
+    monkeypatch.setattr(app_module, 'storage', YAMLStorage(temp_dir))
 
     yield proposals_dir
 

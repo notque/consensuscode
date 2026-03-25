@@ -33,10 +33,15 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.bluesky-collective.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default: ./.bluesky-collective.yaml or $HOME/.bluesky-collective.yaml)")
+	rootCmd.PersistentFlags().String("data-dir", "", "data directory (default is ./.bluesky-collective-data)")
 	rootCmd.PersistentFlags().String("log-level", "info", "log level (debug, info, warn, error)")
-	
+
 	// Bind flags to viper
+	if err := viper.BindPFlag("data_dir", rootCmd.PersistentFlags().Lookup("data-dir")); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to bind data-dir flag: %v\n", err)
+		os.Exit(1)
+	}
 	if err := viper.BindPFlag("log-level", rootCmd.PersistentFlags().Lookup("log-level")); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to bind log-level flag: %v\n", err)
 		os.Exit(1)
@@ -63,11 +68,11 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		viper.AddConfigPath(home)
+		// Search current directory first, then home directory.
 		viper.AddConfigPath(".")
+		if home, err := os.UserHomeDir(); err == nil {
+			viper.AddConfigPath(home)
+		}
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".bluesky-collective")
 	}

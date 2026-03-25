@@ -86,7 +86,9 @@ func newConfigSetCmd(logger *zap.Logger) *cobra.Command {
 }
 
 func newConfigInitCmd(logger *zap.Logger) *cobra.Command {
-	return &cobra.Command{
+	var configPath string
+
+	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize configuration file",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -101,13 +103,25 @@ func newConfigInitCmd(logger *zap.Logger) *cobra.Command {
 			viper.SetDefault("agent.id", "go-systems-developer")
 			viper.SetDefault("log-level", "info")
 
-			// Determine config file location
-			home, err := os.UserHomeDir()
-			if err != nil {
-				return fmt.Errorf("failed to get home directory: %w", err)
+			// Determine config file location: use --path flag, then --config
+			// root flag, then fall back to .bluesky-collective.yaml in the
+			// current directory (no hardcoded home-directory path).
+			if configPath == "" {
+				if existing := viper.ConfigFileUsed(); existing != "" {
+					configPath = existing
+				} else {
+					configPath = ".bluesky-collective.yaml"
+				}
 			}
 
-			configPath := filepath.Join(home, ".bluesky-collective.yaml")
+			// Create parent directory if needed
+			dir := filepath.Dir(configPath)
+			if dir != "." && dir != "" {
+				if err := os.MkdirAll(dir, 0755); err != nil {
+					return fmt.Errorf("failed to create config directory: %w", err)
+				}
+			}
+
 			viper.SetConfigFile(configPath)
 
 			// Write config file
@@ -126,4 +140,8 @@ func newConfigInitCmd(logger *zap.Logger) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVarP(&configPath, "path", "p", "", "Path for the config file (default: ./.bluesky-collective.yaml)")
+
+	return cmd
 }

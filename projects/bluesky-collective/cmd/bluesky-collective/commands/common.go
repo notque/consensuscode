@@ -3,7 +3,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -16,17 +15,15 @@ import (
 )
 
 // dataDir returns the base directory for local data storage.
+// Priority: --data-dir flag / config file data_dir / BLUESKY_COLLECTIVE_DATA_DIR env var,
+// then a relative default of "./.bluesky-collective-data" in the working directory.
 func dataDir() string {
 	dir := viper.GetString("data_dir")
 	if dir != "" {
 		return dir
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ".bluesky-collective-data"
-	}
-	return filepath.Join(home, ".bluesky-collective-data")
+	return ".bluesky-collective-data"
 }
 
 // newConsensusChecker creates a FileChecker with configuration from viper.

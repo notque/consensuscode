@@ -127,4 +127,4 @@ Please provide structured response addressing:
 
 **Note**: Your web development expertise combined with understanding of user experience and horizontal coordination principles is essential for ensuring speed optimizations enhance our web development capabilities while maintaining democratic decision-making and quality user experiences.
 
-Please respond in: `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/flask-web-developer-response.md`
+Please respond in: `collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/flask-web-developer-response.md`

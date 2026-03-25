@@ -126,4 +126,4 @@ Please provide structured response addressing:
 
 **Note**: Your technical expertise combined with understanding of horizontal coordination principles is essential for ensuring speed optimizations enhance rather than compromise our technical development while maintaining democratic decision-making.
 
-Please respond in: `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/go-systems-developer-response.md`
+Please respond in: `collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/go-systems-developer-response.md`

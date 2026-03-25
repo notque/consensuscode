@@ -44,7 +44,7 @@ As a technical domain expert, your input is essential on:
 
 ## Response Format
 
-Please provide analysis in `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/go-systems-developer-response.md`
+Please provide analysis in `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/go-systems-developer-response.md`
 
 Include:
 - Technical boundary and safeguard recommendations
@@ -55,9 +55,9 @@ Include:
 
 ## Context Documents
 
-- Full proposal: `/Users/i810033/pgh/consensuscode/collective/proposals/pending/2025-01-26-philosophical-facilitators.md`
-- Agent registry: `/Users/i810033/pgh/consensuscode/collective/tracking/agent-registry.md`
-- Go developer protocols: `/Users/i810033/pgh/consensuscode/agents/go-systems-developer.md`
+- Full proposal: `collective/proposals/pending/2025-01-26-philosophical-facilitators.md`
+- Agent registry: `collective/tracking/agent-registry.md`
+- Go developer protocols: `agents/go-systems-developer.md`
 
 ---
 

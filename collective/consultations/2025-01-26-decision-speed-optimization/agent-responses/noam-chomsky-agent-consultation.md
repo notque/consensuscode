@@ -122,4 +122,4 @@ Please provide structured response addressing:
 
 **Note**: Your analysis of whether these optimizations enhance or undermine our libertarian socialist foundations is crucial for maintaining the anti-authoritarian integrity of our collective while improving operational effectiveness.
 
-Please respond in: `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/noam-chomsky-agent-response.md`
+Please respond in: `collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/noam-chomsky-agent-response.md`

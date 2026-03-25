@@ -44,7 +44,7 @@ As the foundational governance agent, your input is essential on:
 
 ## Response Format
 
-Please provide analysis in `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/consensus-base-response.md`
+Please provide analysis in `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/consensus-base-response.md`
 
 Include:
 - Assessment of principle compatibility
@@ -55,9 +55,9 @@ Include:
 
 ## Context Documents
 
-- Full proposal: `/Users/i810033/pgh/consensuscode/collective/proposals/pending/2025-01-26-philosophical-facilitators.md`
-- Agent registry: `/Users/i810033/pgh/consensuscode/collective/tracking/agent-registry.md`
-- Consensus protocols: `/Users/i810033/pgh/consensuscode/agents/consensus-base.md`
+- Full proposal: `collective/proposals/pending/2025-01-26-philosophical-facilitators.md`
+- Agent registry: `collective/tracking/agent-registry.md`
+- Consensus protocols: `agents/consensus-base.md`
 
 ---
 

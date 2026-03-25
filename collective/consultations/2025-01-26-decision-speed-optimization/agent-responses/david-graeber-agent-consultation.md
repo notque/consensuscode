@@ -134,4 +134,4 @@ Please provide structured response addressing:
 
 **Note**: Your anthropological perspective on the lived reality of consensus practice is essential for ensuring optimizations enhance rather than undermine the human dynamics that make horizontal coordination effective and meaningful.
 
-Please respond in: `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/david-graeber-agent-response.md`
+Please respond in: `collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/david-graeber-agent-response.md`

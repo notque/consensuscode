@@ -81,11 +81,11 @@ Create two philosophical facilitator agents to provide expertise in anarchist or
 ### Agent Responses Summary
 *Links to individual agent response files will be added here*
 
-- consensus-base: [CONSULTED] - `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/consensus-base-consultation.md`
-- consensus-coordinator: [CONSULTED] - `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/consensus-coordinator-consultation.md`
-- product-steward: [CONSULTED] - `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/product-steward-consultation.md`
-- go-systems-developer: [CONSULTED] - `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/go-systems-developer-consultation.md`
-- flask-web-developer: [CONSULTED] - `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/flask-web-developer-consultation.md`
+- consensus-base: [CONSULTED] - `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/consensus-base-consultation.md`
+- consensus-coordinator: [CONSULTED] - `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/consensus-coordinator-consultation.md`
+- product-steward: [CONSULTED] - `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/product-steward-consultation.md`
+- go-systems-developer: [CONSULTED] - `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/go-systems-developer-consultation.md`
+- flask-web-developer: [CONSULTED] - `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/flask-web-developer-consultation.md`
 
 ### Concerns Raised
 *Any objections or requests for modification will be documented here*

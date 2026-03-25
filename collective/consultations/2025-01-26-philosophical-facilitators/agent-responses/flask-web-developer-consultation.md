@@ -44,7 +44,7 @@ As a web development and Python domain expert, your input is essential on:
 
 ## Response Format
 
-Please provide analysis in `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/flask-web-developer-response.md`
+Please provide analysis in `collective/consultations/2025-01-26-philosophical-facilitators/agent-responses/flask-web-developer-response.md`
 
 Include:
 - Web development boundary and safeguard recommendations
@@ -55,9 +55,9 @@ Include:
 
 ## Context Documents
 
-- Full proposal: `/Users/i810033/pgh/consensuscode/collective/proposals/pending/2025-01-26-philosophical-facilitators.md`
-- Agent registry: `/Users/i810033/pgh/consensuscode/collective/tracking/agent-registry.md`
-- Flask developer protocols: `/Users/i810033/pgh/consensuscode/agents/flask-web-developer.md`
+- Full proposal: `collective/proposals/pending/2025-01-26-philosophical-facilitators.md`
+- Agent registry: `collective/tracking/agent-registry.md`
+- Flask developer protocols: `agents/flask-web-developer.md`
 
 ---
 

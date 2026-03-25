@@ -13,7 +13,7 @@ This file tracks all decisions currently under collective consideration. All age
 ### CollectiveFlow Integration
 The collective is now using CollectiveFlow for proposals. Check active proposals with:
 ```bash
-cd /Users/i810033/pgh/consensuscode/projects/collectiveflow
+cd projects/collectiveflow
 ./collectiveflow status active
 ```
 

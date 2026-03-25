@@ -107,4 +107,4 @@ Please provide structured response addressing:
 
 **Note**: Your perspective on balancing user needs with horizontal principles is crucial for ensuring speed optimizations serve stakeholders while maintaining our democratic foundations.
 
-Please respond in: `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/product-steward-response.md`
+Please respond in: `collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/product-steward-response.md`

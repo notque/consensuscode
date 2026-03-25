@@ -77,4 +77,4 @@ Please provide structured response addressing:
 
 **Note**: This is a foundational decision affecting how we coordinate all future work. Your perspective as the embodiment of our consensus principles is essential for maintaining horizontal integrity while improving efficiency.
 
-Please respond in: `/Users/i810033/pgh/consensuscode/collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/consensus-base-response.md`
+Please respond in: `collective/consultations/2025-01-26-decision-speed-optimization/agent-responses/consensus-base-response.md`

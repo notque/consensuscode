@@ -1,8 +1,8 @@
 # CollectiveFlow gitignore
 # We want to track proposals and decisions in git for transparency
 
-# Binary
-collectiveflow
+# Binary (only at this directory level, not cmd/collectiveflow/)
+/collectiveflow
 
 # Temporary files
 *.tmp

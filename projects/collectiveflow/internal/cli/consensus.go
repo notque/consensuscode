@@ -172,11 +172,11 @@ Remember that consensus is about addressing concerns, not simply voting.`,
 			proposalID := args[0]
 
 			if contributor == "" {
-				return fmt.Errorf("contributor name is required")
+				return fmt.Errorf("contributor name is required\n\nUsage:\n  collectiveflow consensus input PROPOSAL-ID -c \"your-name\" -i \"your input\" [-s]")
 			}
 
 			if input == "" {
-				return fmt.Errorf("input text is required")
+				return fmt.Errorf("input text is required\n\nUsage:\n  collectiveflow consensus input PROPOSAL-ID -c \"your-name\" -i \"your input\" [-s]")
 			}
 
 			// Create consultation record
@@ -237,11 +237,11 @@ collective will, not individual authority.`,
 			proposalID := args[0]
 
 			if result == "" {
-				return fmt.Errorf("decision result is required (approved/rejected/deferred/no_consensus)")
+				return fmt.Errorf("decision result is required\n\nValid values: approved, rejected, deferred, no_consensus\n\nUsage:\n  collectiveflow consensus complete PROPOSAL-ID -r approved --rationale \"All concerns addressed\"")
 			}
 
 			if rationale == "" {
-				return fmt.Errorf("rationale for the decision is required")
+				return fmt.Errorf("rationale for the decision is required -- the collective needs to understand why this decision was made\n\nUsage:\n  collectiveflow consensus complete PROPOSAL-ID -r approved --rationale \"Explain the reasoning\"")
 			}
 
 			// Parse decision result
@@ -256,7 +256,7 @@ collective will, not individual authority.`,
 			case "no_consensus":
 				decisionResult = proposal.DecisionNoConsensus
 			default:
-				return fmt.Errorf("invalid decision result: %s (use approved/rejected/deferred/no_consensus)", result)
+				return fmt.Errorf("invalid decision result %q\n\nValid values:\n  approved       - collective agrees to proceed\n  rejected       - collective decides not to proceed\n  deferred       - postpone for future consideration\n  no_consensus   - unable to reach agreement", result)
 			}
 
 			// Create decision record

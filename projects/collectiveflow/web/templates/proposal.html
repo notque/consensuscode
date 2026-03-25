@@ -9,10 +9,16 @@
         <ol class="flex items-center space-x-2 text-sm">
             <li>
                 <a href="/" class="text-primary-600 hover:text-primary-800 hover:underline focus:underline">
+                    Home
+                </a>
+            </li>
+            <li aria-hidden="true" class="text-gray-400">/</li>
+            <li>
+                <a href="/proposals" class="text-primary-600 hover:text-primary-800 hover:underline focus:underline">
                     All Proposals
                 </a>
             </li>
-            <li aria-hidden="true" class="text-gray-400">›</li>
+            <li aria-hidden="true" class="text-gray-400">/</li>
             <li aria-current="page" class="text-gray-700 font-medium truncate">{{ proposal.title }}</li>
         </ol>
     </nav>
@@ -22,11 +28,23 @@
         <header class="mb-4">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
                 <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ proposal.title }}</h1>
-                <span class="collective-badge bg-gray-100 text-gray-800 flex-shrink-0"
-                      aria-label="Status: {{ proposal.status }}">
-                    <span aria-hidden="true">{{ proposal.status | status_emoji }}</span>
-                    <span class="ml-1">{{ proposal.status }}</span>
-                </span>
+                <div class="flex gap-2 flex-shrink-0">
+                    <span class="collective-badge bg-gray-100 text-gray-800"
+                          aria-label="Status: {{ proposal.status }}">
+                        <span aria-hidden="true">{{ proposal.status | status_emoji }}</span>
+                        <span class="ml-1">{{ proposal.status }}</span>
+                    </span>
+                    {% set urg = proposal.urgency|default('medium') %}
+                    <span class="collective-badge
+                        {% if urg == 'emergency' %}bg-red-100 text-red-800 border border-red-300
+                        {% elif urg == 'high' %}bg-orange-100 text-orange-800 border border-orange-300
+                        {% elif urg == 'medium' %}bg-yellow-100 text-yellow-800 border border-yellow-300
+                        {% else %}bg-green-100 text-green-800 border border-green-300
+                        {% endif %}"
+                        aria-label="Urgency: {{ urg }}">
+                        {% if urg == 'emergency' %}!! {% elif urg == 'high' %}! {% endif %}{{ urg }}
+                    </span>
+                </div>
             </div>
 
             <p class="text-gray-700 text-base leading-relaxed">{{ proposal.description }}</p>
@@ -64,6 +82,184 @@
         </div>
         {% endif %}
     </article>
+
+    <!-- Visual Progress Indicator -->
+    <section class="collective-card mb-6" aria-labelledby="progress-heading">
+        <h2 id="progress-heading" class="text-lg font-semibold text-gray-900 mb-4">
+            Proposal Progress
+        </h2>
+
+        {% set stages = ['proposed', 'consultation', 'consensus', 'implemented'] %}
+        {% set current_status = proposal.status|default('proposed') %}
+        {% set stage_index = {'proposed': 0, 'consultation': 1, 'consensus': 2, 'implemented': 3, 'blocked': -1, 'withdrawn': -2} %}
+        {% set current_idx = stage_index[current_status]|default(0) %}
+
+        <!-- Progress bar -->
+        <div class="relative" role="progressbar"
+             aria-label="Proposal at {{ current_status }} stage"
+             aria-valuenow="{{ current_idx + 1 }}"
+             aria-valuemin="1"
+             aria-valuemax="4">
+
+            <!-- Background track -->
+            <div class="hidden sm:block absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded-full mx-8" aria-hidden="true"></div>
+
+            <!-- Filled track -->
+            {% if current_idx >= 0 %}
+            <div class="hidden sm:block absolute top-5 left-0 h-1 rounded-full mx-8
+                {% if current_idx == 0 %}bg-blue-500{% elif current_idx == 1 %}bg-amber-500{% elif current_idx == 2 %}bg-purple-500{% else %}bg-green-500{% endif %}"
+                style="width: {{ (current_idx / 3 * 100)|round|int }}%;"
+                aria-hidden="true"></div>
+            {% endif %}
+
+            <!-- Stage dots and labels -->
+            <div class="flex flex-col sm:flex-row justify-between relative gap-4 sm:gap-0">
+                {% for stage in stages %}
+                {% set idx = loop.index0 %}
+                <div class="flex sm:flex-col items-center gap-3 sm:gap-1 sm:w-1/4 text-center"
+                     aria-label="{{ stage|title }} stage{% if idx < current_idx %}, completed{% elif idx == current_idx %}, current{% else %}, upcoming{% endif %}">
+                    <!-- Stage circle -->
+                    <div class="relative z-10 flex-shrink-0">
+                        {% if current_status == 'blocked' and idx == current_idx %}
+                        <!-- Blocked state -->
+                        <div class="w-10 h-10 rounded-full bg-red-500 border-4 border-red-200 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        {% elif idx < current_idx %}
+                        <!-- Completed stage -->
+                        <div class="w-10 h-10 rounded-full bg-green-500 border-4 border-green-200 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        {% elif idx == current_idx %}
+                        <!-- Current stage -->
+                        <div class="w-10 h-10 rounded-full border-4 flex items-center justify-center
+                            {% if stage == 'proposed' %}bg-blue-500 border-blue-200
+                            {% elif stage == 'consultation' %}bg-amber-500 border-amber-200
+                            {% elif stage == 'consensus' %}bg-purple-500 border-purple-200
+                            {% else %}bg-green-500 border-green-200{% endif %}">
+                            <div class="w-3 h-3 bg-white rounded-full" aria-hidden="true"></div>
+                        </div>
+                        {% else %}
+                        <!-- Future stage -->
+                        <div class="w-10 h-10 rounded-full bg-gray-200 border-4 border-gray-100 flex items-center justify-center">
+                            <div class="w-3 h-3 bg-gray-400 rounded-full" aria-hidden="true"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Label -->
+                    <span class="text-xs font-semibold uppercase tracking-wide
+                        {% if idx < current_idx %}text-green-700
+                        {% elif idx == current_idx %}{% if stage == 'proposed' %}text-blue-700{% elif stage == 'consultation' %}text-amber-700{% elif stage == 'consensus' %}text-purple-700{% else %}text-green-700{% endif %}
+                        {% else %}text-gray-400{% endif %}">
+                        {{ stage|title }}
+                        {% if idx == current_idx %}<span class="sr-only">(current)</span>{% endif %}
+                        {% if idx < current_idx %}<span class="sr-only">(completed)</span>{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Blocked / Withdrawn notice -->
+        {% if current_status == 'blocked' %}
+        <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert">
+            <p class="text-sm text-red-800 font-medium flex items-center gap-2">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                This proposal is currently blocked. Concerns need to be resolved before it can proceed.
+            </p>
+        </div>
+        {% elif current_status == 'withdrawn' %}
+        <div class="mt-4 p-3 bg-gray-100 border border-gray-300 rounded-lg" role="status">
+            <p class="text-sm text-gray-700 font-medium">
+                This proposal has been withdrawn.
+            </p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Agent Participation -->
+    <section class="collective-card mb-6" aria-labelledby="participation-heading">
+        <h2 id="participation-heading" class="text-lg font-semibold text-gray-900 mb-4">
+            Agent Participation
+        </h2>
+
+        {% set known_agents = [
+            'consensus-coordinator', 'product-steward', 'go-systems-developer',
+            'flask-web-developer', 'devops-local-infrastructure', 'noam-chomsky-agent', 'david-graeber-agent',
+            'go-code-quality-specialist', 'api-design-specialist', 'python-testing-specialist',
+            'frontend-specialist', 'database-design-specialist', 'web-security-specialist',
+            'ux-research-specialist', 'documentation-specialist'
+        ] %}
+
+        {% set consulted_agents = [] %}
+        {% for c in proposal.consultations|default([]) %}
+            {% if consulted_agents.append(c.contributor|default('anonymous')) %}{% endif %}
+        {% endfor %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div class="p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+                <div class="text-2xl font-bold text-green-700" aria-label="{{ consulted_agents|length }} agents provided input">
+                    {{ consulted_agents|length }}
+                </div>
+                <div class="text-xs text-green-600 font-medium">Provided Input</div>
+            </div>
+            <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                <div class="text-2xl font-bold text-gray-600" aria-label="{{ known_agents|length }} agents in collective">
+                    {{ known_agents|length }}
+                </div>
+                <div class="text-xs text-gray-500 font-medium">Agents in Collective</div>
+            </div>
+        </div>
+
+        <!-- Agent list -->
+        <div class="space-y-2" role="list" aria-label="Agent participation status">
+            {% for agent in known_agents %}
+            <div class="flex items-center justify-between py-1.5 px-3 rounded-md text-sm
+                {% if agent in consulted_agents %}bg-green-50{% else %}bg-gray-50{% endif %}"
+                role="listitem">
+                <span class="font-medium {% if agent in consulted_agents %}text-green-800{% else %}text-gray-500{% endif %}">
+                    {{ agent }}
+                </span>
+                {% if agent in consulted_agents %}
+                <span class="flex items-center gap-1 text-green-700 text-xs font-medium">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    Participated
+                </span>
+                {% else %}
+                <span class="text-gray-400 text-xs">Awaiting input</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <!-- Show any external contributors not in the known list -->
+            {% for agent in consulted_agents %}
+            {% if agent not in known_agents %}
+            <div class="flex items-center justify-between py-1.5 px-3 rounded-md text-sm bg-blue-50"
+                role="listitem">
+                <span class="font-medium text-blue-800">
+                    {{ agent }}
+                    <span class="text-xs text-blue-500 ml-1">(external)</span>
+                </span>
+                <span class="flex items-center gap-1 text-blue-700 text-xs font-medium">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    Participated
+                </span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </section>
 
     <!-- Consensus Status -->
     {% if proposal.consensus_status %}
@@ -231,32 +427,65 @@
     </section>
     {% endif %}
 
-    <!-- Consensus History -->
+    <!-- Consensus History Timeline -->
     {% if proposal.consensus_history %}
     <section class="collective-card mb-6" aria-labelledby="history-heading">
-        <h2 id="history-heading" class="text-lg font-semibold text-gray-900 mb-4">Process History</h2>
+        <h2 id="history-heading" class="text-lg font-semibold text-gray-900 mb-4">Process Timeline</h2>
 
-        <ol class="space-y-3" role="list">
-            {% for event in proposal.consensus_history | reverse %}
-            <li class="flex items-start space-x-3">
-                <div class="flex-shrink-0 w-2 h-2 bg-primary-400 rounded-full mt-2" aria-hidden="true"></div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-sm">
-                        <span class="font-medium text-gray-900">{{ event.event | replace('_', ' ') | title }}</span>
-                        {% if event.actor %}
-                        <span class="text-gray-500">by <strong>{{ event.actor }}</strong></span>
+        <div class="relative" aria-label="Proposal history timeline">
+            <!-- Vertical line -->
+            <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200" aria-hidden="true"></div>
+
+            <ol class="space-y-6 relative" role="list">
+                {% for event in proposal.consensus_history %}
+                {% set event_type = event.event|default('update') %}
+                <li class="ml-12 relative" role="listitem">
+                    <!-- Timeline dot -->
+                    <div class="absolute -left-[calc(1.75rem+1px)] top-1 flex items-center justify-center" aria-hidden="true">
+                        <div class="w-6 h-6 rounded-full border-2 border-white shadow-sm flex items-center justify-center
+                            {% if event_type == 'proposal_created' %}bg-blue-500
+                            {% elif event_type == 'consultation_started' or event_type == 'consultation_added' %}bg-amber-500
+                            {% elif event_type == 'consensus_reached' %}bg-purple-500
+                            {% elif event_type == 'implemented' %}bg-green-500
+                            {% elif event_type == 'blocked' %}bg-red-500
+                            {% else %}bg-gray-400{% endif %}">
+                            {% if event_type == 'proposal_created' %}
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                            {% elif event_type == 'consensus_reached' or event_type == 'implemented' %}
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            {% elif event_type == 'blocked' %}
+                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                            {% else %}
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Event content -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                            <div>
+                                <span class="font-semibold text-sm text-gray-900">
+                                    {{ event.event | replace('_', ' ') | title }}
+                                </span>
+                                {% if event.actor %}
+                                <span class="text-sm text-gray-500">
+                                    by <strong>{{ event.actor }}</strong>
+                                </span>
+                                {% endif %}
+                            </div>
+                            <time datetime="{{ event.timestamp }}" class="text-xs text-gray-400 flex-shrink-0">
+                                {{ event.timestamp | humanize_date }}
+                            </time>
+                        </div>
+                        {% if event.details %}
+                        <p class="text-sm text-gray-600 mt-1">{{ event.details }}</p>
                         {% endif %}
                     </div>
-                    {% if event.details %}
-                    <p class="text-sm text-gray-600 mt-1">{{ event.details }}</p>
-                    {% endif %}
-                    <p class="text-xs text-gray-400 mt-1">
-                        <time datetime="{{ event.timestamp }}">{{ event.timestamp | humanize_date }}</time>
-                    </p>
-                </div>
-            </li>
-            {% endfor %}
-        </ol>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
     </section>
     {% endif %}
 

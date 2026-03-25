@@ -37,7 +37,10 @@ func init() {
 	rootCmd.PersistentFlags().String("log-level", "info", "log level (debug, info, warn, error)")
 	
 	// Bind flags to viper
-	viper.BindPFlag("log-level", rootCmd.PersistentFlags().Lookup("log-level"))
+	if err := viper.BindPFlag("log-level", rootCmd.PersistentFlags().Lookup("log-level")); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to bind log-level flag: %v\n", err)
+		os.Exit(1)
+	}
 
 	// Initialize logger
 	var err error

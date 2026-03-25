@@ -172,10 +172,16 @@ func (c *FileChecker) RecordVote(_ context.Context, proposalID string, vote Vote
 }
 
 // CheckConsensus evaluates whether consensus has been reached for a proposal.
-func (c *FileChecker) CheckConsensus(ctx context.Context, proposalID string) (bool, error) {
-	decision, err := c.GetDecision(ctx, proposalID)
-	if err != nil {
-		return false, err
+// It reads the decision file directly rather than calling GetDecision to avoid
+// nested RLock acquisition on the non-reentrant sync.RWMutex.
+func (c *FileChecker) CheckConsensus(_ context.Context, proposalID string) (bool, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	decisionPath := filepath.Join(c.baseDir, "decisions", proposalID+".json")
+	var decision Decision
+	if err := readJSON(decisionPath, &decision); err != nil {
+		return false, fmt.Errorf("check consensus for %s: %w", proposalID, err)
 	}
 	return decision.Status == StatusConsensus, nil
 }
@@ -236,7 +242,7 @@ func (c *FileChecker) GetProposal(_ context.Context, proposalID string) (*Propos
 }
 
 // writeJSON marshals v to JSON and writes it to path.
-func writeJSON(path string, v interface{}) error {
+func writeJSON(path string, v any) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal json: %w", err)
@@ -245,7 +251,7 @@ func writeJSON(path string, v interface{}) error {
 }
 
 // readJSON reads a JSON file at path and unmarshals it into v.
-func readJSON(path string, v interface{}) error {
+func readJSON(path string, v any) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err

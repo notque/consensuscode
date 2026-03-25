@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -40,7 +41,7 @@ type CreateSessionRequest struct {
 type CreateRecordRequest struct {
 	Repo       string      `json:"repo"`
 	Collection string      `json:"collection"`
-	Record     interface{} `json:"record"`
+	Record     any `json:"record"`
 }
 
 // CreateRecordResponse is the response from com.atproto.repo.createRecord.
@@ -248,7 +249,7 @@ func (c *Client) DeletePost(ctx context.Context, uri string) error {
 
 // GetProfile retrieves a user's profile.
 func (c *Client) GetProfile(ctx context.Context, actor string) (*GetProfileResponse, error) {
-	url := fmt.Sprintf("%s/xrpc/app.bsky.actor.getProfile?actor=%s", c.serviceURL, actor)
+	url := fmt.Sprintf("%s/xrpc/app.bsky.actor.getProfile?actor=%s", c.serviceURL, url.QueryEscape(actor))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -285,7 +286,7 @@ func (c *Client) GetAuthorFeed(ctx context.Context, actor string, limit int) (*G
 		limit = 50
 	}
 
-	url := fmt.Sprintf("%s/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=%d", c.serviceURL, actor, limit)
+	url := fmt.Sprintf("%s/xrpc/app.bsky.feed.getAuthorFeed?actor=%s&limit=%d", c.serviceURL, url.QueryEscape(actor), limit)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -344,7 +345,7 @@ func (c *Client) GetHandle() string {
 }
 
 // doRequest performs an XRPC request.
-func (c *Client) doRequest(ctx context.Context, method, nsid string, body interface{}, result interface{}, auth bool) error {
+func (c *Client) doRequest(ctx context.Context, method, nsid string, body any, result any, auth bool) error {
 	url := fmt.Sprintf("%s/xrpc/%s", c.serviceURL, nsid)
 
 	var reqBody io.Reader

@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	"github.com/consensuscode/bluesky-collective/pkg/consensus"
 	"github.com/consensuscode/bluesky-collective/pkg/storage"
@@ -150,8 +151,11 @@ func validatePostRequest(req PostRequest) error {
 	if req.Text == "" {
 		return fmt.Errorf("post text cannot be empty")
 	}
-	if len(req.Text) > 300 {
-		return fmt.Errorf("post text exceeds 300 character limit (%d chars)", len(req.Text))
+	// Use RuneCountInString instead of len() to correctly count multi-byte
+	// characters (emoji, CJK, etc.) rather than raw bytes.
+	charCount := utf8.RuneCountInString(req.Text)
+	if charCount > 300 {
+		return fmt.Errorf("post text exceeds 300 character limit (%d chars)", charCount)
 	}
 	return nil
 }

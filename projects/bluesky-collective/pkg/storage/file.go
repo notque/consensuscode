@@ -126,7 +126,7 @@ func (s *FileStore) GetPublicationHistory(_ context.Context, limit int) ([]PostR
 }
 
 // writeJSON marshals v to JSON and writes it to path.
-func writeJSON(path string, v interface{}) error {
+func writeJSON(path string, v any) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal json: %w", err)
@@ -138,7 +138,7 @@ func writeJSON(path string, v interface{}) error {
 }
 
 // readJSON reads a JSON file at path and unmarshals it into v.
-func readJSON(path string, v interface{}) error {
+func readJSON(path string, v any) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("read file %s: %w", path, err)

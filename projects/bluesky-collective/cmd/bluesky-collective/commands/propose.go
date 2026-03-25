@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -32,9 +33,10 @@ Example:
 				return fmt.Errorf("reasoning for the post is required")
 			}
 
+			charCount := utf8.RuneCountInString(text)
 			logger.Info("Proposing new post for consensus",
 				zap.String("text", text),
-				zap.Int("character_count", len(text)),
+				zap.Int("character_count", charCount),
 			)
 
 			client, err := newCollectiveClient()
@@ -53,7 +55,7 @@ Example:
 
 			fmt.Printf("Post proposal submitted for collective consensus:\n")
 			fmt.Printf("  Text: %s\n", text)
-			fmt.Printf("  Character count: %d/300\n", len(text))
+			fmt.Printf("  Character count: %d/300\n", charCount)
 			fmt.Printf("  Reasoning: %s\n", reasoning)
 			fmt.Printf("  Proposal ID: %s\n", decision.ProposalID)
 			fmt.Printf("  Status: %s\n", decision.Status)

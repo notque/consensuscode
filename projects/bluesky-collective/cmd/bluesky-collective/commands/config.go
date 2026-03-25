@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -106,7 +107,7 @@ func newConfigInitCmd(logger *zap.Logger) *cobra.Command {
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
 
-			configPath := home + "/.bluesky-collective.yaml"
+			configPath := filepath.Join(home, ".bluesky-collective.yaml")
 			viper.SetConfigFile(configPath)
 
 			// Write config file

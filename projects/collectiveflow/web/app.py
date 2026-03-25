@@ -172,6 +172,118 @@ def about():
     """View showing information about the collective and its principles."""
     return render_template('about.html')
 
+@app.route('/dashboard')
+def dashboard():
+    """Dashboard showing collective-wide statistics, velocity, and participation."""
+    proposals = load_proposals()
+
+    # Basic stats
+    status_counts = {}
+    urgency_counts = {}
+    for proposal in proposals:
+        status = proposal.get('status', 'proposed')
+        status_counts[status] = status_counts.get(status, 0) + 1
+        urgency = proposal.get('urgency', 'medium')
+        urgency_counts[urgency] = urgency_counts.get(urgency, 0) + 1
+
+    proposed_count = status_counts.get('proposed', 0)
+    consultation_count = status_counts.get('consultation', 0)
+    consensus_count = status_counts.get('consensus', 0)
+    implemented_count = status_counts.get('implemented', 0)
+
+    # Collect all unique contributors
+    contributors = set()
+    for proposal in proposals:
+        contributors.add(proposal.get('proposer', 'anonymous'))
+        for consultation in proposal.get('consultations', []):
+            contributors.add(consultation.get('contributor', 'anonymous'))
+
+    stats = {
+        'total_proposals': len(proposals),
+        'active_count': proposed_count + consultation_count,
+        'consensus_count': consensus_count,
+        'implemented_count': implemented_count,
+        'contributor_count': len(contributors),
+    }
+
+    # Velocity metrics
+    total_history_events = 0
+    proposals_with_history = 0
+    total_consultations = 0
+    for proposal in proposals:
+        history = proposal.get('consensus_history', [])
+        if history:
+            proposals_with_history += 1
+            total_history_events += len(history)
+        total_consultations += len(proposal.get('consultations', []))
+
+    velocity = {
+        'proposals_with_history': proposals_with_history,
+        'avg_events_per_proposal': round(total_history_events / proposals_with_history, 1) if proposals_with_history > 0 else 0,
+        'avg_consultations': round(total_consultations / len(proposals), 1) if proposals else 0,
+    }
+
+    # Agent participation rates
+    agent_contributions = {}
+    for proposal in proposals:
+        for consultation in proposal.get('consultations', []):
+            contributor = consultation.get('contributor', 'anonymous')
+            agent_contributions[contributor] = agent_contributions.get(contributor, 0) + 1
+
+    max_contributions = max(agent_contributions.values()) if agent_contributions else 1
+    participation = sorted(
+        [
+            {
+                'name': name,
+                'count': count,
+                'percentage': (count / max_contributions * 100) if max_contributions > 0 else 0
+            }
+            for name, count in agent_contributions.items()
+        ],
+        key=lambda x: x['count'],
+        reverse=True
+    )
+
+    # Project status overview (based on affected_areas)
+    project_map = {}
+    for proposal in proposals:
+        areas = proposal.get('affected_areas', [])
+        status = proposal.get('status', 'proposed')
+        for area in areas:
+            if area not in project_map:
+                project_map[area] = {'name': area, 'proposal_count': 0, 'statuses': []}
+            project_map[area]['proposal_count'] += 1
+            if status not in project_map[area]['statuses']:
+                project_map[area]['statuses'].append(status)
+
+    projects = sorted(project_map.values(), key=lambda x: x['proposal_count'], reverse=True)
+
+    # Recent activity (from consensus_history across all proposals)
+    recent_events = []
+    for proposal in proposals:
+        for event in proposal.get('consensus_history', []):
+            recent_events.append({
+                'type': event.get('event', 'update'),
+                'proposal_id': proposal.get('id'),
+                'proposal_title': proposal.get('title'),
+                'timestamp': event.get('timestamp'),
+                'actor': event.get('actor'),
+            })
+    # Sort by timestamp descending, take last 10
+    recent_events.sort(key=lambda e: str(e.get('timestamp', '')), reverse=True)
+    recent_events = recent_events[:10]
+
+    return render_template(
+        'dashboard.html',
+        stats=stats,
+        status_counts=status_counts,
+        urgency_counts=urgency_counts,
+        velocity=velocity,
+        participation=participation,
+        projects=projects,
+        recent_events=recent_events,
+    )
+
 @app.route('/collective')
 def collective_view():
     """View showing the collective's current state and activity."""

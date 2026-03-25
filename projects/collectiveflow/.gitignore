@@ -13,3 +13,12 @@ collectiveflow
 
 # Logs (if we add logging)
 *.log
+
+# SQLite databases (generated from YAML source data)
+*.db
+*.db-wal
+*.db-shm
+
+# Python bytecode
+__pycache__/
+*.pyc

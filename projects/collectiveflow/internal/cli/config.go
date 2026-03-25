@@ -45,7 +45,7 @@ and any overrides from config files or environment variables.`,
 			if configFile != "" {
 				fmt.Printf("Config file: %s\n\n", configFile)
 			} else {
-				fmt.Println("No config file found - using defaults\n")
+				fmt.Println("No config file found - using defaults")
 			}
 
 			// Display all settings

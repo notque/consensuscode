@@ -92,6 +92,9 @@ func (a *App) addCommands() {
 	// Add configuration management commands
 	a.rootCmd.AddCommand(newConfigCmd())
 
+	// Add dashboard summary command
+	a.rootCmd.AddCommand(newDashboardCmd())
+
 	// Add web interface commands
 	a.rootCmd.AddCommand(newWebCmd())
 }

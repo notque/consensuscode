@@ -53,7 +53,7 @@ to review and provide input on.`,
 			}
 			
 			if title == "" {
-				return fmt.Errorf("proposal title is required")
+				return fmt.Errorf("proposal title is required\n\nUsage examples:\n  collectiveflow proposal create \"My proposal title\"\n  collectiveflow proposal create -t \"My proposal title\" -d \"Detailed description\"")
 			}
 
 			// Create the proposal

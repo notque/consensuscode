@@ -15,13 +15,13 @@ func initStore() error {
 	if adapter != nil {
 		return nil
 	}
-	
+
 	// Use file-based storage for now (per collective consensus)
 	fileStore, err := storage.NewFileStore("./data/proposals")
 	if err != nil {
-		return fmt.Errorf("failed to initialize storage: %w", err)
+		return fmt.Errorf("could not set up proposal storage at ./data/proposals: %w\n\nTroubleshooting:\n  - Make sure you are running collectiveflow from the project root directory\n  - The directory will be created automatically if it does not exist\n  - Check that you have write permissions in the current directory", err)
 	}
-	
+
 	adapter = NewStorageAdapter(fileStore)
 	return nil
 }
@@ -161,7 +161,7 @@ func UpdateProposal(proposalID string, updates Update) error {
 	
 	// Check if updates are allowed in current status
 	if proposal.Status == StatusImplemented || proposal.Status == StatusWithdrawn {
-		return fmt.Errorf("cannot update proposal in %s status", proposal.Status)
+		return fmt.Errorf("cannot update proposal: it has already been %s\n\nProposals in a terminal state (implemented or withdrawn) cannot be modified.\nConsider creating a new proposal instead.", proposal.Status)
 	}
 	
 	// Apply updates
@@ -223,7 +223,7 @@ func UpdateStatus(proposalID string, newStatus ProposalStatus, actor string) err
 	
 	// Check if transition is valid
 	if !proposal.CanTransitionTo(newStatus) {
-		return fmt.Errorf("cannot transition from %s to %s", proposal.Status, newStatus)
+		return fmt.Errorf("cannot move proposal from %q to %q status\n\nAllowed transitions:\n  proposed      -> consultation, withdrawn\n  consultation  -> consensus, blocked, withdrawn\n  consensus     -> implemented, consultation\n  blocked       -> consultation\n\nCurrent status: %s", proposal.Status, newStatus, proposal.Status)
 	}
 	
 	// Update status
@@ -271,7 +271,7 @@ func AddConsultationInput(proposalID string, consultation Consultation) error {
 	
 	// Verify proposal is in consultation status
 	if proposal.Status != StatusConsultation {
-		return fmt.Errorf("proposal must be in consultation status to add input (current: %s)", proposal.Status)
+		return fmt.Errorf("cannot add input: proposal is in %q status, but must be in %q status\n\nTo start the consultation process, run:\n  collectiveflow consensus start %s", proposal.Status, StatusConsultation, proposalID)
 	}
 	
 	// Add the consultation
@@ -299,7 +299,7 @@ func RecordDecision(proposalID string, decision Decision) error {
 	
 	// Verify proposal is in appropriate status
 	if proposal.Status != StatusConsensus && proposal.Status != StatusConsultation {
-		return fmt.Errorf("proposal must be in consensus or consultation status to record decision")
+		return fmt.Errorf("cannot record decision: proposal is in %q status\n\nDecisions can only be recorded when a proposal is in \"consultation\" or \"consensus\" status.\nCurrent status: %s", proposal.Status, proposal.Status)
 	}
 	
 	// Record the decision

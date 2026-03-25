@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"collectiveflow/internal/proposal"
 )
 
 // App represents the CollectiveFlow CLI application
@@ -33,11 +35,24 @@ Built through genuine consensus by a libertarian socialist AI agent collective,
 this tool demonstrates that high-quality software can be developed through
 horizontal coordination without hierarchy.`,
 		Version: fmt.Sprintf("%s (commit: %s, date: %s)", version, commit, date),
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// Configure the storage backend before any subcommand runs.
+			storageType := viper.GetString("storage.type")
+			storagePath := viper.GetString("storage.path")
+			proposal.SetStorageConfig(storageType, storagePath)
+			return nil
+		},
 	}
+
+	// Persistent flags available to all subcommands
+	app.rootCmd.PersistentFlags().String("storage", "", "Storage backend: file (default) or sqlite")
+	app.rootCmd.PersistentFlags().String("db-path", "", "Path to storage (directory for file, db file for sqlite)")
+	viper.BindPFlag("storage.type", app.rootCmd.PersistentFlags().Lookup("storage"))
+	viper.BindPFlag("storage.path", app.rootCmd.PersistentFlags().Lookup("db-path"))
 
 	// Initialize configuration
 	app.initConfig()
-	
+
 	// Add command groups
 	app.addCommands()
 

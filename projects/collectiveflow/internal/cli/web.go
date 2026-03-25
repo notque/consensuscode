@@ -65,15 +65,33 @@ func runWebServe(cmd *cobra.Command, args []string) error {
 		storagePath = viper.GetString("storage.path")
 	}
 
-	// Ensure storage path exists
-	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
-		return fmt.Errorf("storage path does not exist: %s\nCreate it with: mkdir -p %s", storagePath, storagePath)
-	}
+	storageType := viper.GetString("storage.type")
 
-	// Initialize storage
-	store, err := storage.NewFileStore(storagePath)
-	if err != nil {
-		return fmt.Errorf("failed to initialize storage: %w", err)
+	// Initialize the appropriate storage backend
+	var store storage.ProposalStore
+	switch storageType {
+	case "sqlite":
+		if storagePath == "" {
+			storagePath = "./data/collectiveflow.db"
+		}
+		sqliteStore, err := storage.NewSQLiteStore(storagePath)
+		if err != nil {
+			return fmt.Errorf("failed to initialize SQLite storage: %w", err)
+		}
+		store = sqliteStore
+	default:
+		if storagePath == "" {
+			storagePath = "./collective-data"
+		}
+		// Ensure storage path exists
+		if _, err := os.Stat(storagePath); os.IsNotExist(err) {
+			return fmt.Errorf("storage path does not exist: %s\nCreate it with: mkdir -p %s", storagePath, storagePath)
+		}
+		fileStore, err := storage.NewFileStore(storagePath)
+		if err != nil {
+			return fmt.Errorf("failed to initialize storage: %w", err)
+		}
+		store = fileStore
 	}
 
 	// Create web server

@@ -10,19 +10,64 @@ import (
 // adapter is our storage adapter (initialized on first use)
 var adapter *StorageAdapter
 
+// storageConfig holds the configured storage backend settings.
+// Set via SetStorageConfig before any operations are called.
+var storageConfig struct {
+	storageType string // "file" or "sqlite"
+	storagePath string // directory for file, db path for sqlite
+}
+
+// SetStorageConfig allows the CLI to configure which storage backend to use.
+// Must be called before any proposal operations. If not called, defaults
+// to file-based storage at "./data/proposals".
+func SetStorageConfig(storageType, storagePath string) {
+	storageConfig.storageType = storageType
+	storageConfig.storagePath = storagePath
+}
+
+// InitStoreWith directly sets the storage adapter using a pre-built store.
+// Useful for testing or when the caller already has a storage.ProposalStore.
+func InitStoreWith(store storage.ProposalStore) {
+	adapter = NewStorageAdapter(store)
+}
+
 // initStore ensures the storage backend is initialized
 func initStore() error {
 	if adapter != nil {
 		return nil
 	}
 
-	// Use file-based storage for now (per collective consensus)
-	fileStore, err := storage.NewFileStore("./data/proposals")
-	if err != nil {
-		return fmt.Errorf("could not set up proposal storage at ./data/proposals: %w\n\nTroubleshooting:\n  - Make sure you are running collectiveflow from the project root directory\n  - The directory will be created automatically if it does not exist\n  - Check that you have write permissions in the current directory", err)
+	sType := storageConfig.storageType
+	sPath := storageConfig.storagePath
+
+	// Apply defaults
+	if sType == "" {
+		sType = "file"
+	}
+	if sPath == "" {
+		if sType == "sqlite" {
+			sPath = "./data/collectiveflow.db"
+		} else {
+			sPath = "./data/proposals"
+		}
 	}
 
-	adapter = NewStorageAdapter(fileStore)
+	switch sType {
+	case "sqlite":
+		sqliteStore, err := storage.NewSQLiteStore(sPath)
+		if err != nil {
+			return fmt.Errorf("could not set up SQLite storage at %s: %w\n\nTroubleshooting:\n  - Make sure the parent directory exists or is writable\n  - Check that the database file is not locked by another process", sPath, err)
+		}
+		adapter = NewStorageAdapter(sqliteStore)
+
+	default:
+		fileStore, err := storage.NewFileStore(sPath)
+		if err != nil {
+			return fmt.Errorf("could not set up proposal storage at %s: %w\n\nTroubleshooting:\n  - Make sure you are running collectiveflow from the project root directory\n  - The directory will be created automatically if it does not exist\n  - Check that you have write permissions in the current directory", sPath, err)
+		}
+		adapter = NewStorageAdapter(fileStore)
+	}
+
 	return nil
 }
 

@@ -5,18 +5,22 @@ CollectiveFlow Web Interface
 A horizontal, non-hierarchical web interface for the CollectiveFlow consensus system.
 This Flask application provides accessible views of proposals and consultations
 without authentication or special roles - embodying true collective principles.
+
+Storage backends:
+    The app delegates all data access to a storage backend (see storage.py).
+    Set STORAGE_BACKEND=yaml (default) or STORAGE_BACKEND=sqlite to choose.
+    All routes are backend-agnostic -- they call storage.load_proposals(),
+    storage.get_proposal(), and storage.save_proposal() without knowing
+    whether the data lives in YAML files or a SQLite database.
 """
 
 import os
-import re
-import json
 import logging
 import secrets
-import yaml
-import uuid
 from datetime import datetime
-from pathlib import Path
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, abort
+
+from storage import get_storage
 
 app = Flask(__name__)
 
@@ -56,98 +60,16 @@ def csrf_protect():
             abort(403)
 
 
-# ---------- Configuration ----------
-DATA_DIR = os.environ.get('COLLECTIVEFLOW_DATA', '../data')
-PROPOSALS_DIR = Path(DATA_DIR) / 'proposals'
-
-def load_proposals():
-    """Load all proposals from the data directory."""
-    proposals = []
-    
-    if not PROPOSALS_DIR.exists():
-        return proposals
-    
-    for yaml_file in PROPOSALS_DIR.glob('*.yaml'):
-        try:
-            with open(yaml_file, 'r') as f:
-                proposal = yaml.safe_load(f)
-                if proposal:
-                    proposals.append(proposal)
-        except Exception as e:
-            print(f"Error loading {yaml_file}: {e}")
-    
-    # Sort by date, newest first
-    # Normalize dates to strings for consistent comparison (YAML may parse dates as datetime objects)
-    def sort_key(p):
-        date = p.get('date', '')
-        if isinstance(date, datetime):
-            return date.isoformat()
-        return str(date)
-
-    proposals.sort(key=sort_key, reverse=True)
-    return proposals
-
-def get_proposal(proposal_id):
-    """Load a specific proposal by ID.
-
-    Security: validates proposal_id to prevent path traversal attacks.
-    Only alphanumeric characters, hyphens, and underscores are allowed.
-    """
-    # Reject any proposal_id that could be used for path traversal
-    if not re.match(r'^[a-zA-Z0-9_-]+$', proposal_id):
-        return None
-
-    yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
-
-    # Defense in depth: verify resolved path stays within PROPOSALS_DIR
-    try:
-        yaml_path.resolve().relative_to(PROPOSALS_DIR.resolve())
-    except ValueError:
-        return None
-
-    if yaml_path.exists():
-        with open(yaml_path, 'r') as f:
-            return yaml.safe_load(f)
-
-    return None
-
-def save_proposal(proposal_data):
-    """Save a new proposal to the data directory."""
-    # Ensure proposals directory exists
-    PROPOSALS_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Generate unique ID if not provided
-    if 'id' not in proposal_data:
-        proposal_data['id'] = f"proposal-{datetime.now().strftime('%Y-%m-%d')}-{str(uuid.uuid4())[:8]}"
-    
-    # Add metadata
-    proposal_data['date'] = datetime.now().isoformat()
-    proposal_data['status'] = 'proposed'
-    proposal_data['consensus_status'] = 'New proposal submitted'
-    proposal_data['consensus_history'] = [{
-        'timestamp': proposal_data['date'],
-        'event': 'proposal_created',
-        'actor': proposal_data.get('proposer', 'web-user'),
-        'details': f"Created with urgency: {proposal_data.get('urgency', 'medium')}"
-    }]
-    proposal_data['consultations'] = []
-    
-    # Save to YAML file
-    yaml_path = PROPOSALS_DIR / f"{proposal_data['id']}.yaml"
-    with open(yaml_path, 'w') as f:
-        yaml.safe_dump(proposal_data, f, default_flow_style=False, sort_keys=False)
-    
-    # Also save JSON for API compatibility
-    json_path = PROPOSALS_DIR / f"{proposal_data['id']}.json"
-    with open(json_path, 'w') as f:
-        json.dump(proposal_data, f, indent=2)
-    
-    return proposal_data['id']
+# ---------- Storage ----------
+# Initialize the storage backend once at import time.
+# The backend is chosen by the STORAGE_BACKEND env var (default: "yaml").
+# See storage.py for the full explanation of the strategy pattern.
+storage = get_storage()
 
 @app.route('/')
 def index():
     """Home page showing all proposals."""
-    proposals = load_proposals()
+    proposals = storage.load_proposals()
     
     # Group proposals by status for better organization
     grouped = {
@@ -169,17 +91,17 @@ def index():
 @app.route('/proposal/<proposal_id>')
 def proposal_detail(proposal_id):
     """Detailed view of a specific proposal."""
-    proposal = get_proposal(proposal_id)
-    
+    proposal = storage.get_proposal(proposal_id)
+
     if not proposal:
         return "Proposal not found", 404
-    
+
     return render_template('proposal.html', proposal=proposal)
 
 @app.route('/api/proposals')
 def api_proposals():
     """API endpoint for proposals list."""
-    proposals = load_proposals()
+    proposals = storage.load_proposals()
     return jsonify({
         'proposals': proposals,
         'count': len(proposals)
@@ -188,17 +110,17 @@ def api_proposals():
 @app.route('/api/proposal/<proposal_id>')
 def api_proposal(proposal_id):
     """API endpoint for a specific proposal."""
-    proposal = get_proposal(proposal_id)
-    
+    proposal = storage.get_proposal(proposal_id)
+
     if not proposal:
         return jsonify({'error': 'Proposal not found'}), 404
-    
+
     return jsonify(proposal)
 
 @app.route('/proposals')
 def proposals_list():
     """View showing all proposals grouped by status."""
-    proposals = load_proposals()
+    proposals = storage.load_proposals()
 
     # Group proposals by status
     grouped = {
@@ -225,7 +147,7 @@ def about():
 @app.route('/collective')
 def collective_view():
     """View showing the collective's current state and activity."""
-    proposals = load_proposals()
+    proposals = storage.load_proposals()
     
     # Calculate collective statistics
     stats = {
@@ -296,7 +218,7 @@ def create_proposal():
             return redirect(url_for('create_proposal_form'))
 
         # Save proposal
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = storage.save_proposal(proposal_data)
 
         flash('Proposal submitted successfully!', 'success')
         return redirect(url_for('proposal_detail', proposal_id=proposal_id))

@@ -9,7 +9,8 @@
 #   user-advocacy       Documentation only — no build needed
 
 .PHONY: all setup test dev clean status help \
-        collectiveflow bluesky collective-website user-advocacy
+        collectiveflow bluesky collective-website user-advocacy \
+        docker-up docker-down docker-build
 
 # Project directories
 CF_DIR=projects/collectiveflow
@@ -123,6 +124,25 @@ bluesky:
 collective-website-dev:
 	$(MAKE) -C $(CW_DIR) dev
 
+# ─────────────────────────────────────────────
+# Docker Targets
+# ─────────────────────────────────────────────
+
+## docker-up: Start all services in Docker (CollectiveFlow + Website)
+docker-up:
+	@echo "Starting all services with Docker Compose..."
+	@echo "  CollectiveFlow web:   http://localhost:5000"
+	@echo "  Collective Website:   http://localhost:5001"
+	docker compose up --build
+
+## docker-down: Stop all Docker services
+docker-down:
+	docker compose down
+
+## docker-build: Rebuild Docker images without starting
+docker-build:
+	docker compose build
+
 ## help: Show this help
 help:
 	@echo "Consensus Code — Horizontal Agent Collective"
@@ -133,6 +153,11 @@ help:
 	@echo "  make dev      Show how to start dev servers"
 	@echo "  make status   Show project status"
 	@echo "  make clean    Clean all build artifacts"
+	@echo ""
+	@echo "Docker (one-command local dev):"
+	@echo "  make docker-up       Start all services in Docker"
+	@echo "  make docker-down     Stop all Docker services"
+	@echo "  make docker-build    Rebuild Docker images"
 	@echo ""
 	@echo "Per-project shortcuts:"
 	@echo "  make collectiveflow          Build CollectiveFlow CLI"

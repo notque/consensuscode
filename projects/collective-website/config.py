@@ -9,8 +9,8 @@ class Config:
     """Base configuration class"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'collective-development-key-change-in-production'
     
-    # Collective data paths
-    COLLECTIVE_ROOT = Path(__file__).parent.parent.parent / 'projects' / 'collectiveflow'
+    # Collective data paths — override with COLLECTIVE_ROOT env var in Docker
+    COLLECTIVE_ROOT = Path(os.environ.get('COLLECTIVE_ROOT', str(Path(__file__).parent.parent.parent / 'projects' / 'collectiveflow')))
     
     # Flask settings
     DEBUG = False

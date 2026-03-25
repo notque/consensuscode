@@ -22,6 +22,7 @@ services:
       - ./web/templates:/app/templates
     environment:
       - FLASK_ENV=development
+      - FLASK_DEBUG=1
       - COLLECTIVEFLOW_DATA=/app/data
       - SECRET_KEY=collective-flow-dev-key
     restart: unless-stopped

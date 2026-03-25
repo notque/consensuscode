@@ -1,0 +1,49 @@
+# Consensus Code — Local Development Docker Compose
+# Starts all web services with one command. No cloud needed.
+#
+# Usage:
+#   docker compose up        — start all services
+#   docker compose down      — stop everything
+#   docker compose build     — rebuild after code changes
+#   docker compose up web    — start only CollectiveFlow web
+#
+# Services:
+#   web               CollectiveFlow web interface    http://localhost:5000
+#   collective-website  Public collective website     http://localhost:5001
+
+services:
+  web:
+    build:
+      context: ./projects/collectiveflow/web
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount data directory so proposals are persisted on the host
+      - ./projects/collectiveflow/data:/app/data
+      # Mount templates for live editing during development
+      - ./projects/collectiveflow/web/templates:/app/templates
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - COLLECTIVEFLOW_DATA=/app/data
+      - SECRET_KEY=collective-flow-dev-key
+    restart: unless-stopped
+
+  collective-website:
+    build:
+      context: ./projects/collective-website
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      # Mount templates for live editing during development
+      - ./projects/collective-website/templates:/app/templates
+      - ./projects/collective-website/static:/app/static
+      # Mount collective data so the website can read proposals
+      - ./projects/collectiveflow:/collective/collectiveflow
+    environment:
+      - FLASK_ENV=development
+      - SECRET_KEY=collective-website-dev-key
+      - COLLECTIVE_ROOT=/collective/collectiveflow
+    restart: unless-stopped

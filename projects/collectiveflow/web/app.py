@@ -53,12 +53,15 @@ def load_proposals():
 
 def get_proposal(proposal_id):
     """Load a specific proposal by ID."""
-    yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
-    
-    if yaml_path.exists():
-        with open(yaml_path, 'r') as f:
-            return yaml.safe_load(f)
-    
+    try:
+        yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
+        if yaml_path.exists():
+            with open(yaml_path, 'r') as f:
+                return yaml.safe_load(f)
+    except (OSError, Exception):
+        # Handle filesystem errors (e.g., filename too long)
+        pass
+
     return None
 
 def save_proposal(proposal_data):
@@ -282,7 +285,10 @@ def urgency_color(urgency):
         'high': 'text-orange-600',
         'emergency': 'text-red-600'
     }
-    return color_map.get(urgency, 'text-gray-600')
+    try:
+        return color_map.get(urgency, 'text-gray-600')
+    except TypeError:
+        return 'text-gray-600'
 
 if __name__ == '__main__':
     # Run in development mode

@@ -341,7 +341,7 @@ class TestAPIDataConsistency:
 
         No caching issues - new data should be immediately accessible.
         """
-        from app import save_proposal
+        import app as _app_mod
 
         # Save a new proposal
         new_proposal = {
@@ -351,7 +351,7 @@ class TestAPIDataConsistency:
             'urgency': 'low'
         }
 
-        proposal_id = save_proposal(new_proposal)
+        proposal_id = _app_mod.storage.save_proposal(new_proposal)
 
         # API should immediately return the new proposal
         response = client.get(f'/api/proposal/{proposal_id}')
@@ -412,7 +412,7 @@ class TestAPIContentNegotiation:
         Unicode and special characters should be handled correctly.
         """
         # Create proposal with special characters
-        from app import save_proposal
+        import app as _app_mod
 
         special_proposal = {
             'title': 'Special Characters: "quotes", emoji 🤝, unicode café',
@@ -420,7 +420,7 @@ class TestAPIContentNegotiation:
             'proposer': 'test-agent'
         }
 
-        proposal_id = save_proposal(special_proposal)
+        proposal_id = _app_mod.storage.save_proposal(special_proposal)
 
         # Get via API
         response = client.get(f'/api/proposal/{proposal_id}')
@@ -511,11 +511,11 @@ class TestAPIPerformance:
 
         The API should remain responsive as the collective grows.
         """
-        from app import save_proposal
+        import app as _app_mod
 
         # Create multiple proposals
         for i in range(50):
-            save_proposal({
+            _app_mod.storage.save_proposal({
                 'title': f'Proposal {i}',
                 'description': f'Test proposal number {i}',
                 'proposer': 'test-agent',
@@ -537,7 +537,7 @@ class TestAPIPerformance:
 
         Proposals with extensive discussion should work correctly.
         """
-        from app import save_proposal
+        import app as _app_mod
 
         # Create proposal with many consultations
         consultations = [

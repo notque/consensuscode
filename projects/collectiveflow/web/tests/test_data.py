@@ -1,29 +1,44 @@
 """
 CollectiveFlow Web Application - Data Loading and Persistence Tests
 
-These tests validate YAML data operations, ensuring:
-- Proposals load correctly from YAML files
+These tests validate storage operations, ensuring:
+- Proposals load correctly from the storage backend
 - Data structure is preserved during load/save cycles
-- File system operations are reliable
+- File system operations are reliable (for YAML backend)
 - Error handling works for corrupted or missing files
 - The collective's data remains transparent and accessible
 
 Why Test Data Operations?
 File-based storage is central to our transparency principle.
-These tests ensure data integrity and accessibility.
+These tests ensure data integrity and accessibility regardless
+of which storage backend (YAML or SQLite) is in use.
+
+Note: Tests use the app.storage object (injected by the temp_data_dir
+fixture in conftest.py), so they exercise the StorageBackend interface
+the same way routes do.
 """
 
 import pytest
 import yaml
 from pathlib import Path
 from datetime import datetime
-from app import load_proposals, get_proposal, save_proposal
+import app as app_module
 from conftest import assert_proposal_structure
+
+
+def _storage():
+    """Return the current storage backend from the app module.
+
+    Helper to keep test code DRY. The conftest temp_data_dir fixture
+    swaps app_module.storage to a YAMLStorage pointing at a temp dir,
+    so all calls here operate on isolated test data.
+    """
+    return app_module.storage
 
 
 class TestLoadProposals:
     """
-    Tests for the load_proposals() function.
+    Tests for the _storage().load_proposals() function.
 
     This function reads all proposal YAML files and returns a list.
     It's the foundation of our data access.
@@ -36,7 +51,7 @@ class TestLoadProposals:
 
         The function should always return a list, even if empty.
         """
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
         assert isinstance(proposals, list)
 
     @pytest.mark.data
@@ -46,7 +61,7 @@ class TestLoadProposals:
 
         All YAML files in the proposals directory should be loaded.
         """
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
 
         # We created 3 sample proposals
         assert len(proposals) == 3
@@ -58,7 +73,7 @@ class TestLoadProposals:
 
         Each proposal should have all required fields.
         """
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
 
         # Check first proposal has expected structure
         for proposal in proposals:
@@ -71,7 +86,7 @@ class TestLoadProposals:
 
         An empty directory should return an empty list, not error.
         """
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
         assert isinstance(proposals, list)
         assert len(proposals) == 0
 
@@ -82,12 +97,12 @@ class TestLoadProposals:
 
         If the proposals directory doesn't exist, return empty list.
         """
-        # Point to a nonexistent directory
-        nonexistent = temp_data_dir.parent / 'nonexistent'
-        import app as app_module
-        monkeypatch.setattr(app_module, 'PROPOSALS_DIR', nonexistent)
+        # Point to a nonexistent directory by swapping the storage backend
+        nonexistent_dir = str(temp_data_dir.parent / 'nonexistent')
+        from storage import YAMLStorage
+        monkeypatch.setattr(app_module, 'storage', YAMLStorage(nonexistent_dir))
 
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
         assert isinstance(proposals, list)
         assert len(proposals) == 0
 
@@ -98,7 +113,7 @@ class TestLoadProposals:
 
         Sorting helps members see recent activity first.
         """
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
 
         # Should be sorted with newest first
         if len(proposals) > 1:
@@ -119,7 +134,7 @@ class TestLoadProposals:
             f.write('this is: not: valid: yaml: syntax:\n  - broken')
 
         # Should still load without crashing
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
         assert isinstance(proposals, list)
         # Corrupted file should be skipped
 
@@ -130,7 +145,7 @@ class TestLoadProposals:
 
         No data should be lost during the load process.
         """
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
 
         # Find the proposal with consultations
         proposal_with_consultations = next(
@@ -151,7 +166,7 @@ class TestLoadProposals:
 
 class TestGetProposal:
     """
-    Tests for the get_proposal(proposal_id) function.
+    Tests for the _storage().get_proposal(proposal_id) function.
 
     This function loads a specific proposal by ID.
     It's used for detail page views.
@@ -164,7 +179,7 @@ class TestGetProposal:
 
         Members should be able to retrieve any proposal by its ID.
         """
-        proposal = get_proposal('test-proposal-001')
+        proposal = _storage().get_proposal('test-proposal-001')
 
         assert proposal is not None
         assert proposal['id'] == 'test-proposal-001'
@@ -177,7 +192,7 @@ class TestGetProposal:
 
         The full proposal structure should be returned.
         """
-        proposal = get_proposal('test-proposal-002')
+        proposal = _storage().get_proposal('test-proposal-002')
 
         assert_proposal_structure(proposal)
         assert 'consultations' in proposal
@@ -190,7 +205,7 @@ class TestGetProposal:
 
         Non-existent proposals should return None, not error.
         """
-        proposal = get_proposal('nonexistent-id')
+        proposal = _storage().get_proposal('nonexistent-id')
         assert proposal is None
 
     @pytest.mark.data
@@ -200,7 +215,7 @@ class TestGetProposal:
 
         Consultations are essential for transparency.
         """
-        proposal = get_proposal('test-proposal-002')
+        proposal = _storage().get_proposal('test-proposal-002')
 
         assert 'consultations' in proposal
         assert len(proposal['consultations']) > 0
@@ -217,7 +232,7 @@ class TestGetProposal:
 
         Decision rationale should be preserved and accessible.
         """
-        proposal = get_proposal('test-proposal-003')
+        proposal = _storage().get_proposal('test-proposal-003')
 
         assert 'decision' in proposal
         assert proposal['decision']['result'] == 'approved'
@@ -230,13 +245,13 @@ class TestGetProposal:
 
         Handles empty state gracefully.
         """
-        proposal = get_proposal('any-id')
+        proposal = _storage().get_proposal('any-id')
         assert proposal is None
 
 
 class TestSaveProposal:
     """
-    Tests for the save_proposal(proposal_data) function.
+    Tests for the _storage().save_proposal(proposal_data) function.
 
     This function creates new proposals and saves them to YAML files.
     It's used when members submit new proposals via the web interface.
@@ -257,7 +272,7 @@ class TestSaveProposal:
             'affected_areas': ['testing']
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         # Check that file was created
         yaml_path = temp_data_dir / f"{proposal_id}.yaml"
@@ -277,7 +292,7 @@ class TestSaveProposal:
             'urgency': 'low'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         assert proposal_id is not None
         assert isinstance(proposal_id, str)
@@ -296,7 +311,7 @@ class TestSaveProposal:
             'proposer': 'test-agent'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         # Should have generated an ID
         assert 'id' not in proposal_data or proposal_data['id'] == proposal_id
@@ -316,7 +331,7 @@ class TestSaveProposal:
             'urgency': 'medium'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         # Load the saved proposal
         yaml_path = temp_data_dir / f"{proposal_id}.yaml"
@@ -346,7 +361,7 @@ class TestSaveProposal:
             'affected_areas': ['testing', 'data']
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         # Load and verify
         yaml_path = temp_data_dir / f"{proposal_id}.yaml"
@@ -372,7 +387,7 @@ class TestSaveProposal:
             'proposer': 'test-agent'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         # Check both files exist
         yaml_path = temp_data_dir / f"{proposal_id}.yaml"
@@ -394,7 +409,7 @@ class TestSaveProposal:
             'proposer': 'test-agent'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         yaml_path = temp_data_dir / f"{proposal_id}.yaml"
         with open(yaml_path, 'r') as f:
@@ -420,7 +435,7 @@ class TestSaveProposal:
             'urgency': 'low'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         yaml_path = temp_data_dir / f"{proposal_id}.yaml"
         with open(yaml_path, 'r') as f:
@@ -452,7 +467,7 @@ class TestSaveProposal:
             'proposer': 'test-agent'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         # Directory should have been created
         assert temp_data_dir.exists()
@@ -487,10 +502,10 @@ class TestDataIntegrity:
         }
 
         # Save
-        proposal_id = save_proposal(original_data)
+        proposal_id = _storage().save_proposal(original_data)
 
         # Load
-        loaded_data = get_proposal(proposal_id)
+        loaded_data = _storage().get_proposal(proposal_id)
 
         # Verify key fields preserved
         assert loaded_data['title'] == original_data['title']
@@ -514,7 +529,7 @@ class TestDataIntegrity:
             'proposer': 'test-agent'
         }
 
-        proposal_id = save_proposal(proposal_data)
+        proposal_id = _storage().save_proposal(proposal_data)
 
         # Load from both files
         yaml_path = temp_data_dir / f"{proposal_id}.yaml"
@@ -544,8 +559,8 @@ class TestDataIntegrity:
             'proposer': 'test-agent'
         }
 
-        proposal_id = save_proposal(proposal_data)
-        loaded_data = get_proposal(proposal_id)
+        proposal_id = _storage().save_proposal(proposal_data)
+        loaded_data = _storage().get_proposal(proposal_id)
 
         # All special characters should be preserved
         assert loaded_data['title'] == proposal_data['title']
@@ -568,8 +583,8 @@ class TestDataIntegrity:
             'affected_areas': []
         }
 
-        proposal_id = save_proposal(proposal_data)
-        loaded_data = get_proposal(proposal_id)
+        proposal_id = _storage().save_proposal(proposal_data)
+        loaded_data = _storage().get_proposal(proposal_id)
 
         # Empty consultations list should exist
         assert 'consultations' in loaded_data
@@ -597,7 +612,7 @@ class TestErrorHandling:
         """
         # This test is platform-dependent and may be skipped on some systems
         # Just verify load_proposals doesn't crash with various file issues
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
         assert isinstance(proposals, list)
 
     @pytest.mark.data
@@ -627,6 +642,6 @@ class TestErrorHandling:
             f.write('{ this is not: valid yaml at all: [broken')
 
         # Should load the good file and skip the bad one
-        proposals = load_proposals()
+        proposals = _storage().load_proposals()
         assert len(proposals) >= 1
         assert any(p.get('id') == 'good-proposal' for p in proposals)

@@ -336,26 +336,39 @@
             <div class="text-center">
                 <div class="text-4xl mb-3" role="img" aria-label="Document">📝</div>
                 <h4 class="font-semibold text-gray-900 mb-2">Create Proposals</h4>
-                <p class="text-sm text-gray-600 mb-3">Have an idea? Use the CLI to create a proposal:</p>
-                <code class="block bg-white px-3 py-2 rounded text-xs break-all" role="text">
-                    ./collectiveflow proposal create
-                </code>
+                <p class="text-sm text-gray-600 mb-3">Have an idea? Submit it via the web or CLI:</p>
+                <a href="/create"
+                   class="inline-flex items-center justify-center gap-2 bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors mb-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                    </svg>
+                    Create a Proposal
+                </a>
+                <p class="text-xs text-gray-500 mt-1">or via CLI: <code class="bg-white px-1 py-0.5 rounded">./collectiveflow proposal create</code></p>
             </div>
             <div class="text-center">
                 <div class="text-4xl mb-3" role="img" aria-label="Conversation">💬</div>
                 <h4 class="font-semibold text-gray-900 mb-2">Join Discussions</h4>
-                <p class="text-sm text-gray-600 mb-3">Review proposals and add your input:</p>
-                <code class="block bg-white px-3 py-2 rounded text-xs break-all" role="text">
-                    ./collectiveflow consensus input [id]
-                </code>
+                <p class="text-sm text-gray-600 mb-3">Review proposals and add your input directly on any proposal page.</p>
+                <a href="/proposals"
+                   class="inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline focus:underline">
+                    Browse Proposals
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </a>
             </div>
             <div class="text-center">
                 <div class="text-4xl mb-3" role="img" aria-label="Magnifying glass">🔍</div>
                 <h4 class="font-semibold text-gray-900 mb-2">Stay Informed</h4>
                 <p class="text-sm text-gray-600 mb-3">Check active proposals regularly:</p>
-                <code class="block bg-white px-3 py-2 rounded text-xs break-all" role="text">
-                    ./collectiveflow status active
-                </code>
+                <a href="/dashboard"
+                   class="inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline focus:underline">
+                    View Dashboard
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </a>
             </div>
             <div class="text-center">
                 <div class="text-4xl mb-3" role="img" aria-label="Handshake">🤝</div>

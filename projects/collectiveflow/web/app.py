@@ -900,8 +900,14 @@ def collective_view():
 
 @app.route('/create')
 def create_proposal_form():
-    """Show proposal creation form."""
-    return render_template('create_proposal.html')
+    """Show proposal creation form.
+
+    If the user was redirected here after a validation error, their
+    previously entered form data is restored from the session so they
+    don't have to re-type everything.
+    """
+    form_data = session.pop('form_data', {})
+    return render_template('create_proposal.html', form_data=form_data)
 
 @app.route('/create', methods=['POST'])
 def create_proposal():
@@ -926,13 +932,16 @@ def create_proposal():
             'affected_areas': [a for a in raw_areas if a in VALID_AREAS]
         }
 
-        # Basic validation
+        # Basic validation — preserve form data in session so users
+        # don't have to re-enter everything after a validation error.
         if not proposal_data['title']:
             flash('Title is required', 'error')
+            session['form_data'] = proposal_data
             return redirect(url_for('create_proposal_form'))
 
         if not proposal_data['description']:
             flash('Description is required', 'error')
+            session['form_data'] = proposal_data
             return redirect(url_for('create_proposal_form'))
 
         # Save proposal

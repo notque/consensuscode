@@ -11,8 +11,63 @@
         </p>
     </div>
 
-    <!-- Filter/Status Overview -->
-    <div class="collective-card mb-6">
+    <!-- Search and Filter -->
+    <div class="collective-card mb-6" role="search" aria-label="Filter proposals">
+        <div class="flex flex-col gap-4">
+            <!-- Search input -->
+            <div>
+                <label for="proposal-search" class="block text-sm font-medium text-gray-700 mb-1">Search proposals</label>
+                <input type="search" id="proposal-search"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                       placeholder="Search by title or description..."
+                       aria-label="Search proposals by title or description">
+            </div>
+
+            <!-- Filters row -->
+            <div class="flex flex-wrap gap-4 items-end">
+                <!-- Status filter -->
+                <div>
+                    <label for="status-filter" class="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                    <select id="status-filter" aria-label="Filter by status"
+                            class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="">All statuses</option>
+                        <option value="consultation">In Consultation</option>
+                        <option value="proposed">Proposed</option>
+                        <option value="consensus">Consensus Reached</option>
+                        <option value="implemented">Implemented</option>
+                        <option value="blocked">Blocked</option>
+                        <option value="withdrawn">Withdrawn</option>
+                    </select>
+                </div>
+
+                <!-- Urgency filter -->
+                <div>
+                    <label for="urgency-filter" class="block text-xs font-medium text-gray-600 mb-1">Urgency</label>
+                    <select id="urgency-filter" aria-label="Filter by urgency"
+                            class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="">All urgencies</option>
+                        <option value="emergency">Emergency</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+
+                <!-- Clear filters -->
+                <button type="button" id="clear-filters"
+                        class="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        aria-label="Clear all filters">
+                    Clear filters
+                </button>
+            </div>
+
+            <!-- Results count (updated by JS) -->
+            <div id="filter-results" class="text-xs text-gray-500 hidden" role="status" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <!-- Jump-to links -->
+    <div class="collective-card mb-6" id="jump-to-nav">
         <div class="flex flex-wrap gap-4 items-center">
             <span class="text-sm font-medium text-gray-700">Jump to:</span>
             <a href="#consultation" class="text-sm text-blue-600 hover:text-blue-800">
@@ -44,7 +99,7 @@
     {% if grouped_proposals.consultation %}
     <div id="consultation" class="mb-10">
         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span class="text-2xl mr-2">{{ 'consultation' | status_emoji }}</span>
+            <span class="text-2xl mr-2" aria-hidden="true">{{ 'consultation' | status_emoji }}</span>
             In Consultation
         </h3>
         <p class="text-sm text-gray-600 mb-4">
@@ -52,7 +107,11 @@
         </p>
         <div class="space-y-4">
             {% for proposal in grouped_proposals.consultation %}
-            <div class="collective-card hover:shadow-lg transition-shadow">
+            <div class="collective-card hover:shadow-lg transition-shadow proposal-card"
+                 data-status="consultation"
+                 data-urgency="{{ proposal.urgency|default('medium') }}"
+                 data-title="{{ proposal.title|lower }}"
+                 data-description="{{ proposal.description[:300]|lower if proposal.description else '' }}">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-lg font-medium text-gray-900">
                         <a href="/proposal/{{ proposal.id }}" class="text-blue-600 hover:text-blue-800">
@@ -60,10 +119,10 @@
                         </a>
                     </h4>
                     <div class="flex gap-2">
-                        <span class="collective-badge bg-yellow-100 text-yellow-800">
+                        <span class="collective-badge bg-yellow-100 text-yellow-800" aria-label="Status: {{ proposal.status }}">
                             {{ proposal.status }}
                         </span>
-                        <span class="collective-badge {{ proposal.urgency | urgency_color }}">
+                        <span class="collective-badge {{ proposal.urgency | urgency_color }}" aria-label="Urgency: {{ proposal.urgency }}">
                             {{ proposal.urgency }}
                         </span>
                     </div>
@@ -86,7 +145,7 @@
     {% if grouped_proposals.proposed %}
     <div id="proposed" class="mb-10">
         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span class="text-2xl mr-2">{{ 'proposed' | status_emoji }}</span>
+            <span class="text-2xl mr-2" aria-hidden="true">{{ 'proposed' | status_emoji }}</span>
             Newly Proposed
         </h3>
         <p class="text-sm text-gray-600 mb-4">
@@ -94,7 +153,11 @@
         </p>
         <div class="space-y-4">
             {% for proposal in grouped_proposals.proposed %}
-            <div class="collective-card hover:shadow-lg transition-shadow">
+            <div class="collective-card hover:shadow-lg transition-shadow proposal-card"
+                 data-status="proposed"
+                 data-urgency="{{ proposal.urgency|default('medium') }}"
+                 data-title="{{ proposal.title|lower }}"
+                 data-description="{{ proposal.description[:300]|lower if proposal.description else '' }}">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-lg font-medium text-gray-900">
                         <a href="/proposal/{{ proposal.id }}" class="text-blue-600 hover:text-blue-800">
@@ -102,10 +165,10 @@
                         </a>
                     </h4>
                     <div class="flex gap-2">
-                        <span class="collective-badge bg-blue-100 text-blue-800">
+                        <span class="collective-badge bg-blue-100 text-blue-800" aria-label="Status: {{ proposal.status }}">
                             {{ proposal.status }}
                         </span>
-                        <span class="collective-badge {{ proposal.urgency | urgency_color }}">
+                        <span class="collective-badge {{ proposal.urgency | urgency_color }}" aria-label="Urgency: {{ proposal.urgency }}">
                             {{ proposal.urgency }}
                         </span>
                     </div>
@@ -127,7 +190,7 @@
     {% if grouped_proposals.consensus %}
     <div id="consensus" class="mb-10">
         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span class="text-2xl mr-2">{{ 'consensus' | status_emoji }}</span>
+            <span class="text-2xl mr-2" aria-hidden="true">{{ 'consensus' | status_emoji }}</span>
             Consensus Reached
         </h3>
         <p class="text-sm text-gray-600 mb-4">
@@ -135,7 +198,11 @@
         </p>
         <div class="space-y-4">
             {% for proposal in grouped_proposals.consensus %}
-            <div class="collective-card hover:shadow-lg transition-shadow border-green-200">
+            <div class="collective-card hover:shadow-lg transition-shadow border-green-200 proposal-card"
+                 data-status="consensus"
+                 data-urgency="{{ proposal.urgency|default('medium') }}"
+                 data-title="{{ proposal.title|lower }}"
+                 data-description="{{ proposal.description[:300]|lower if proposal.description else '' }}">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-lg font-medium text-gray-900">
                         <a href="/proposal/{{ proposal.id }}" class="text-blue-600 hover:text-blue-800">
@@ -143,10 +210,10 @@
                         </a>
                     </h4>
                     <div class="flex gap-2">
-                        <span class="collective-badge bg-green-100 text-green-800">
+                        <span class="collective-badge bg-green-100 text-green-800" aria-label="Status: {{ proposal.status }}">
                             {{ proposal.status }}
                         </span>
-                        <span class="collective-badge {{ proposal.urgency | urgency_color }}">
+                        <span class="collective-badge {{ proposal.urgency | urgency_color }}" aria-label="Urgency: {{ proposal.urgency }}">
                             {{ proposal.urgency }}
                         </span>
                     </div>
@@ -169,7 +236,7 @@
     {% if grouped_proposals.implemented %}
     <div id="implemented" class="mb-10">
         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span class="text-2xl mr-2">{{ 'implemented' | status_emoji }}</span>
+            <span class="text-2xl mr-2" aria-hidden="true">{{ 'implemented' | status_emoji }}</span>
             Implemented
         </h3>
         <p class="text-sm text-gray-600 mb-4">
@@ -177,7 +244,11 @@
         </p>
         <div class="space-y-4">
             {% for proposal in grouped_proposals.implemented %}
-            <div class="collective-card hover:shadow-lg transition-shadow border-gray-300 bg-gray-50">
+            <div class="collective-card hover:shadow-lg transition-shadow border-gray-300 bg-gray-50 proposal-card"
+                 data-status="implemented"
+                 data-urgency="{{ proposal.urgency|default('medium') }}"
+                 data-title="{{ proposal.title|lower }}"
+                 data-description="{{ proposal.description[:300]|lower if proposal.description else '' }}">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-lg font-medium text-gray-900">
                         <a href="/proposal/{{ proposal.id }}" class="text-blue-600 hover:text-blue-800">
@@ -185,7 +256,7 @@
                         </a>
                     </h4>
                     <div class="flex gap-2">
-                        <span class="collective-badge bg-gray-200 text-gray-800">
+                        <span class="collective-badge bg-gray-200 text-gray-800" aria-label="Status: {{ proposal.status }}">
                             {{ proposal.status }}
                         </span>
                     </div>
@@ -208,7 +279,7 @@
     {% if grouped_proposals.blocked %}
     <div id="blocked" class="mb-10">
         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span class="text-2xl mr-2">{{ 'blocked' | status_emoji }}</span>
+            <span class="text-2xl mr-2" aria-hidden="true">{{ 'blocked' | status_emoji }}</span>
             Blocked
         </h3>
         <p class="text-sm text-gray-600 mb-4">
@@ -216,7 +287,11 @@
         </p>
         <div class="space-y-4">
             {% for proposal in grouped_proposals.blocked %}
-            <div class="collective-card hover:shadow-lg transition-shadow border-red-200">
+            <div class="collective-card hover:shadow-lg transition-shadow border-red-200 proposal-card"
+                 data-status="blocked"
+                 data-urgency="{{ proposal.urgency|default('medium') }}"
+                 data-title="{{ proposal.title|lower }}"
+                 data-description="{{ proposal.description[:300]|lower if proposal.description else '' }}">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-lg font-medium text-gray-900">
                         <a href="/proposal/{{ proposal.id }}" class="text-blue-600 hover:text-blue-800">
@@ -224,7 +299,7 @@
                         </a>
                     </h4>
                     <div class="flex gap-2">
-                        <span class="collective-badge bg-red-100 text-red-800">
+                        <span class="collective-badge bg-red-100 text-red-800" aria-label="Status: {{ proposal.status }}">
                             {{ proposal.status }}
                         </span>
                     </div>
@@ -247,7 +322,7 @@
     {% if grouped_proposals.withdrawn %}
     <div id="withdrawn" class="mb-10">
         <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span class="text-2xl mr-2">{{ 'withdrawn' | status_emoji }}</span>
+            <span class="text-2xl mr-2" aria-hidden="true">{{ 'withdrawn' | status_emoji }}</span>
             Withdrawn
         </h3>
         <p class="text-sm text-gray-600 mb-4">
@@ -255,7 +330,11 @@
         </p>
         <div class="space-y-4">
             {% for proposal in grouped_proposals.withdrawn %}
-            <div class="collective-card hover:shadow-lg transition-shadow border-gray-300 bg-gray-50">
+            <div class="collective-card hover:shadow-lg transition-shadow border-gray-300 bg-gray-50 proposal-card"
+                 data-status="withdrawn"
+                 data-urgency="{{ proposal.urgency|default('medium') }}"
+                 data-title="{{ proposal.title|lower }}"
+                 data-description="{{ proposal.description[:300]|lower if proposal.description else '' }}">
                 <div class="flex justify-between items-start mb-3">
                     <h4 class="text-lg font-medium text-gray-900">
                         <a href="/proposal/{{ proposal.id }}" class="text-blue-600 hover:text-blue-800">
@@ -263,7 +342,7 @@
                         </a>
                     </h4>
                     <div class="flex gap-2">
-                        <span class="collective-badge bg-gray-200 text-gray-600">
+                        <span class="collective-badge bg-gray-200 text-gray-600" aria-label="Status: {{ proposal.status }}">
                             {{ proposal.status }}
                         </span>
                     </div>
@@ -285,25 +364,149 @@
     {% if not (grouped_proposals.consultation or grouped_proposals.proposed or grouped_proposals.consensus or grouped_proposals.implemented or grouped_proposals.blocked or grouped_proposals.withdrawn) %}
     <div class="collective-card text-center py-12">
         <p class="text-gray-500 mb-4">No proposals yet. Be the first to create one!</p>
-        <p class="text-sm text-gray-400">
-            Use the CollectiveFlow CLI to submit your first proposal:
-            <code class="bg-gray-100 px-2 py-1 rounded">./collectiveflow proposal create "Your proposal title"</code>
-        </p>
+        <a href="/create" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+            Create the first proposal
+        </a>
     </div>
     {% endif %}
 
+    <!-- No results from filtering (hidden by default) -->
+    <div id="no-filter-results" class="collective-card text-center py-8 hidden" role="status">
+        <p class="text-gray-500 mb-2">No proposals match your filters.</p>
+        <button type="button" onclick="document.getElementById('clear-filters').click()"
+                class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            Clear all filters
+        </button>
+    </div>
+
     <!-- How to Submit -->
-    <div class="mt-8 p-6 bg-blue-50 rounded-lg">
-        <h3 class="text-lg font-semibold text-blue-900 mb-3">Submit a New Proposal</h3>
-        <p class="text-sm text-blue-800 mb-2">
-            All members can submit proposals using the CollectiveFlow command-line tool:
-        </p>
-        <code class="block bg-blue-100 px-4 py-3 rounded text-blue-900 text-sm mb-3">
-            ./collectiveflow proposal create "Your proposal title"
-        </code>
-        <p class="text-xs text-blue-700">
-            The CLI will guide you through describing your proposal and identifying affected areas.
+    <div class="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-blue-900 mb-1">Submit a New Proposal</h3>
+                <p class="text-sm text-blue-800">
+                    All members can submit proposals via the web or CLI. Every voice is equal.
+                </p>
+            </div>
+            <a href="/create"
+               class="inline-flex items-center justify-center gap-2 bg-blue-600 text-white text-sm font-medium px-5 py-2.5 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex-shrink-0">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                Create Proposal
+            </a>
+        </div>
+        <p class="text-xs text-blue-700 mt-3">
+            Or via CLI: <code class="bg-blue-100 px-2 py-0.5 rounded">./collectiveflow proposal create "Your proposal title"</code>
         </p>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    'use strict';
+
+    var searchInput = document.getElementById('proposal-search');
+    var statusFilter = document.getElementById('status-filter');
+    var urgencyFilter = document.getElementById('urgency-filter');
+    var clearBtn = document.getElementById('clear-filters');
+    var resultsDiv = document.getElementById('filter-results');
+    var noResultsDiv = document.getElementById('no-filter-results');
+    var jumpToNav = document.getElementById('jump-to-nav');
+
+    // All status section containers
+    var sectionIds = ['consultation', 'proposed', 'consensus', 'implemented', 'blocked', 'withdrawn'];
+
+    function filterProposals() {
+        var query = (searchInput.value || '').toLowerCase().trim();
+        var statusVal = statusFilter.value;
+        var urgencyVal = urgencyFilter.value;
+        var isFiltering = query || statusVal || urgencyVal;
+
+        var cards = document.querySelectorAll('.proposal-card');
+        var visibleCount = 0;
+        var totalCount = cards.length;
+
+        cards.forEach(function(card) {
+            var matchesSearch = true;
+            var matchesStatus = true;
+            var matchesUrgency = true;
+
+            if (query) {
+                var title = card.getAttribute('data-title') || '';
+                var desc = card.getAttribute('data-description') || '';
+                matchesSearch = title.indexOf(query) !== -1 || desc.indexOf(query) !== -1;
+            }
+
+            if (statusVal) {
+                matchesStatus = card.getAttribute('data-status') === statusVal;
+            }
+
+            if (urgencyVal) {
+                matchesUrgency = card.getAttribute('data-urgency') === urgencyVal;
+            }
+
+            var visible = matchesSearch && matchesStatus && matchesUrgency;
+            card.style.display = visible ? '' : 'none';
+            if (visible) visibleCount++;
+        });
+
+        // Show/hide section wrappers based on visible children
+        sectionIds.forEach(function(id) {
+            var section = document.getElementById(id);
+            if (!section) return;
+
+            var visibleCards = section.querySelectorAll('.proposal-card:not([style*="display: none"])');
+            section.style.display = visibleCards.length > 0 ? '' : 'none';
+        });
+
+        // Update results indicator
+        if (isFiltering) {
+            resultsDiv.textContent = 'Showing ' + visibleCount + ' of ' + totalCount + ' proposals';
+            resultsDiv.classList.remove('hidden');
+            jumpToNav.style.display = 'none';
+        } else {
+            resultsDiv.classList.add('hidden');
+            jumpToNav.style.display = '';
+        }
+
+        // Show "no results" message if filtering returned 0
+        if (isFiltering && visibleCount === 0) {
+            noResultsDiv.classList.remove('hidden');
+        } else {
+            noResultsDiv.classList.add('hidden');
+        }
+    }
+
+    // Debounce search input for performance
+    var searchTimeout = null;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterProposals, 200);
+    });
+
+    statusFilter.addEventListener('change', filterProposals);
+    urgencyFilter.addEventListener('change', filterProposals);
+
+    clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        statusFilter.value = '';
+        urgencyFilter.value = '';
+        filterProposals();
+        searchInput.focus();
+    });
+
+    // Handle keyboard: Escape clears filters when search is focused
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            clearBtn.click();
+        }
+    });
+})();
+</script>
 {% endblock %}

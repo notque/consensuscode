@@ -5,8 +5,18 @@
 {% block content %}
 <div class="px-4 py-5 sm:px-6">
     <!-- Breadcrumb -->
-    <nav class="mb-4">
-        <a href="/" class="text-blue-600 hover:text-blue-800">&larr; All Proposals</a>
+    <nav class="mb-4" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li>
+                <a href="/" class="text-primary-600 hover:text-primary-800 hover:underline focus:underline">Home</a>
+            </li>
+            <li aria-hidden="true" class="text-gray-400">/</li>
+            <li>
+                <a href="/proposals" class="text-primary-600 hover:text-primary-800 hover:underline focus:underline">All Proposals</a>
+            </li>
+            <li aria-hidden="true" class="text-gray-400">/</li>
+            <li aria-current="page" class="text-gray-700 font-medium">Create Proposal</li>
+        </ol>
     </nav>
 
     <h2 class="text-2xl font-bold text-gray-900 mb-2">Create a New Proposal</h2>
@@ -41,7 +51,8 @@
             </p>
             <input type="text" id="title" name="title" required
                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                   placeholder="e.g., Add automated testing to CollectiveFlow">
+                   placeholder="e.g., Add automated testing to CollectiveFlow"
+                   value="{{ form_data.get('title', '') if form_data else '' }}">
         </div>
 
         <!-- Description -->
@@ -55,7 +66,7 @@
             </p>
             <textarea id="description" name="description" rows="6" required
                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      placeholder="Describe your proposal in detail..."></textarea>
+                      placeholder="Describe your proposal in detail...">{{ form_data.get('description', '') if form_data else '' }}</textarea>
         </div>
 
         <!-- Proposer and Urgency -->
@@ -70,7 +81,8 @@
                 </p>
                 <input type="text" id="proposer" name="proposer"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                       placeholder="anonymous">
+                       placeholder="anonymous"
+                       value="{{ form_data.get('proposer', '') if form_data else '' }}">
             </div>
 
             <!-- Urgency -->
@@ -81,12 +93,13 @@
                 <p class="text-xs text-gray-500 mb-2">
                     How urgently does the collective need to consider this?
                 </p>
+                {% set saved_urgency = form_data.get('urgency', 'medium') if form_data else 'medium' %}
                 <select id="urgency" name="urgency"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                    <option value="low" class="text-green-600">Low - When convenient</option>
-                    <option value="medium" selected class="text-yellow-600">Medium - Normal priority</option>
-                    <option value="high" class="text-orange-600">High - Needs prompt attention</option>
-                    <option value="emergency" class="text-red-600">Emergency - Immediate action needed</option>
+                    <option value="low" {% if saved_urgency == 'low' %}selected{% endif %}>Low - When convenient</option>
+                    <option value="medium" {% if saved_urgency == 'medium' %}selected{% endif %}>Medium - Normal priority</option>
+                    <option value="high" {% if saved_urgency == 'high' %}selected{% endif %}>High - Needs prompt attention</option>
+                    <option value="emergency" {% if saved_urgency == 'emergency' %}selected{% endif %}>Emergency - Immediate action needed</option>
                 </select>
             </div>
         </div>
@@ -101,49 +114,59 @@
                     Select all areas of the collective that this proposal affects.
                     This helps ensure the right members are consulted.
                 </p>
+                {% set saved_areas = form_data.get('affected_areas', []) if form_data else [] %}
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="infrastructure"
+                               {% if 'infrastructure' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>Infrastructure</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="web-interface"
+                               {% if 'web-interface' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>Web Interface</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="cli-tool"
+                               {% if 'cli-tool' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>CLI Tool</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="consensus-process"
+                               {% if 'consensus-process' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>Consensus Process</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="documentation"
+                               {% if 'documentation' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>Documentation</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="external-communication"
+                               {% if 'external-communication' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>External Communication</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="agent-coordination"
+                               {% if 'agent-coordination' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>Agent Coordination</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="testing"
+                               {% if 'testing' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>Testing</span>
                     </label>
                     <label class="flex items-center space-x-2 text-sm text-gray-700">
                         <input type="checkbox" name="affected_areas" value="other"
+                               {% if 'other' in saved_areas %}checked{% endif %}
                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span>Other</span>
                     </label>

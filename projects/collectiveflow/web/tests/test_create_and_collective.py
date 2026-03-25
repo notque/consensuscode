@@ -31,7 +31,7 @@ class TestCreateProposalPost:
     """
 
     @pytest.mark.routes
-    def test_create_proposal_redirects_to_detail_on_success(self, client, temp_data_dir):
+    def test_create_proposal_redirects_to_detail_on_success(self, client, csrf_token, temp_data_dir):
         """
         Test: Successful creation redirects to the new proposal detail page
 
@@ -42,6 +42,7 @@ class TestCreateProposalPost:
             'description': 'Testing redirect target after creation',
             'proposer': 'redirect-tester',
             'urgency': 'low',
+            '_csrf_token': csrf_token,
         }
         response = client.post('/create', data=form_data, follow_redirects=False)
 
@@ -51,7 +52,7 @@ class TestCreateProposalPost:
         assert '/proposal/' in response.headers['Location']
 
     @pytest.mark.routes
-    def test_create_proposal_default_proposer_is_anonymous(self, client, temp_data_dir):
+    def test_create_proposal_default_proposer_is_anonymous(self, client, csrf_token, temp_data_dir):
         """
         Test: When proposer field is omitted, defaults to 'anonymous'
 
@@ -62,6 +63,7 @@ class TestCreateProposalPost:
             'title': 'Anonymous Proposal',
             'description': 'Submitted without a proposer name',
             'urgency': 'medium',
+            '_csrf_token': csrf_token,
         }
         response = client.post('/create', data=form_data, follow_redirects=True)
         assert response.status_code == 200
@@ -75,7 +77,7 @@ class TestCreateProposalPost:
         assert saved['proposer'] == 'anonymous'
 
     @pytest.mark.routes
-    def test_create_proposal_default_urgency_is_medium(self, client, temp_data_dir):
+    def test_create_proposal_default_urgency_is_medium(self, client, csrf_token, temp_data_dir):
         """
         Test: When urgency is not provided, it defaults to 'medium'
 
@@ -85,6 +87,7 @@ class TestCreateProposalPost:
             'title': 'Default Urgency Proposal',
             'description': 'No urgency specified',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }
         client.post('/create', data=form_data, follow_redirects=True)
 
@@ -96,7 +99,7 @@ class TestCreateProposalPost:
         assert saved['urgency'] == 'medium'
 
     @pytest.mark.routes
-    def test_create_proposal_strips_whitespace_from_title(self, client, temp_data_dir):
+    def test_create_proposal_strips_whitespace_from_title(self, client, csrf_token, temp_data_dir):
         """
         Test: Leading and trailing whitespace is stripped from title
 
@@ -106,6 +109,7 @@ class TestCreateProposalPost:
             'title': '   Whitespace Title   ',
             'description': 'Testing whitespace handling',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }
         client.post('/create', data=form_data, follow_redirects=True)
 
@@ -115,7 +119,7 @@ class TestCreateProposalPost:
         assert saved['title'] == 'Whitespace Title'
 
     @pytest.mark.routes
-    def test_create_proposal_whitespace_only_title_rejected(self, client, temp_data_dir):
+    def test_create_proposal_whitespace_only_title_rejected(self, client, csrf_token, temp_data_dir):
         """
         Test: A title of only whitespace is treated as empty and rejected
 
@@ -125,6 +129,7 @@ class TestCreateProposalPost:
             'title': '   ',
             'description': 'Description is fine',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }
         response = client.post('/create', data=form_data, follow_redirects=True)
         assert response.status_code == 200
@@ -134,7 +139,7 @@ class TestCreateProposalPost:
         assert len(yaml_files) == 0
 
     @pytest.mark.routes
-    def test_create_proposal_whitespace_only_description_rejected(self, client, temp_data_dir):
+    def test_create_proposal_whitespace_only_description_rejected(self, client, csrf_token, temp_data_dir):
         """
         Test: A description of only whitespace is treated as empty
 
@@ -144,6 +149,7 @@ class TestCreateProposalPost:
             'title': 'Valid Title',
             'description': '   ',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }
         response = client.post('/create', data=form_data, follow_redirects=True)
         assert response.status_code == 200
@@ -152,7 +158,7 @@ class TestCreateProposalPost:
         assert len(yaml_files) == 0
 
     @pytest.mark.routes
-    def test_create_proposal_affected_areas_list(self, client, temp_data_dir):
+    def test_create_proposal_affected_areas_list(self, client, csrf_token, temp_data_dir):
         """
         Test: Multiple affected_areas are saved as a list
 
@@ -163,7 +169,8 @@ class TestCreateProposalPost:
             'description': 'Affects multiple areas',
             'proposer': 'test-agent',
             'urgency': 'high',
-            'affected_areas': ['testing', 'infrastructure', 'web'],
+            'affected_areas': ['testing', 'infrastructure', 'web-interface'],
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
         assert response.status_code == 200
 
@@ -172,10 +179,10 @@ class TestCreateProposalPost:
             saved = yaml.safe_load(f)
         assert 'testing' in saved['affected_areas']
         assert 'infrastructure' in saved['affected_areas']
-        assert 'web' in saved['affected_areas']
+        assert 'web-interface' in saved['affected_areas']
 
     @pytest.mark.routes
-    def test_create_proposal_empty_affected_areas(self, client, temp_data_dir):
+    def test_create_proposal_empty_affected_areas(self, client, csrf_token, temp_data_dir):
         """
         Test: No affected_areas results in empty list, not an error
 
@@ -185,6 +192,7 @@ class TestCreateProposalPost:
             'title': 'No Areas',
             'description': 'No affected areas specified',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
         assert response.status_code == 200
 
@@ -194,7 +202,7 @@ class TestCreateProposalPost:
         assert saved.get('affected_areas') == []
 
     @pytest.mark.routes
-    def test_create_proposal_saves_both_yaml_and_json(self, client, temp_data_dir):
+    def test_create_proposal_saves_both_yaml_and_json(self, client, csrf_token, temp_data_dir):
         """
         Test: Proposal creation via POST saves both YAML and JSON files
 
@@ -204,6 +212,7 @@ class TestCreateProposalPost:
             'title': 'Dual Format Test',
             'description': 'Should be saved in both formats',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
 
         yaml_files = list(temp_data_dir.glob('*.yaml'))
@@ -212,7 +221,7 @@ class TestCreateProposalPost:
         assert len(json_files) >= 1
 
     @pytest.mark.routes
-    def test_create_proposal_flash_success_message(self, client, temp_data_dir):
+    def test_create_proposal_flash_success_message(self, client, csrf_token, temp_data_dir):
         """
         Test: Successful creation includes a flash message with the title
 
@@ -222,13 +231,14 @@ class TestCreateProposalPost:
             'title': 'Flash Test Proposal',
             'description': 'Testing flash message content',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
 
         data = response.data.decode('utf-8')
         assert 'Flash Test Proposal' in data or 'success' in data.lower()
 
     @pytest.mark.routes
-    def test_create_proposal_flash_error_on_missing_title(self, client, temp_data_dir):
+    def test_create_proposal_flash_error_on_missing_title(self, client, csrf_token, temp_data_dir):
         """
         Test: Missing title produces a flash error mentioning 'required'
 
@@ -237,13 +247,14 @@ class TestCreateProposalPost:
         response = client.post('/create', data={
             'title': '',
             'description': 'Valid description',
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
 
         data = response.data.decode('utf-8').lower()
         assert 'required' in data or 'error' in data
 
     @pytest.mark.routes
-    def test_create_proposal_exception_handler(self, client, temp_data_dir):
+    def test_create_proposal_exception_handler(self, client, csrf_token, temp_data_dir):
         """
         Test: Exception during save_proposal triggers error flash and redirect
 
@@ -255,6 +266,7 @@ class TestCreateProposalPost:
                 'title': 'Exception Proposal',
                 'description': 'This should trigger an exception',
                 'proposer': 'test-agent',
+                '_csrf_token': csrf_token,
             }, follow_redirects=True)
 
             assert response.status_code == 200
@@ -263,7 +275,7 @@ class TestCreateProposalPost:
             assert 'error' in data or 'disk full' in data
 
     @pytest.mark.routes
-    def test_create_proposal_sets_status_to_proposed(self, client, temp_data_dir):
+    def test_create_proposal_sets_status_to_proposed(self, client, csrf_token, temp_data_dir):
         """
         Test: Newly created proposals always start with status 'proposed'
 
@@ -273,6 +285,7 @@ class TestCreateProposalPost:
             'title': 'Status Check Proposal',
             'description': 'Checking initial status',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
 
         yaml_files = list(temp_data_dir.glob('*.yaml'))
@@ -281,7 +294,7 @@ class TestCreateProposalPost:
         assert saved['status'] == 'proposed'
 
     @pytest.mark.routes
-    def test_create_proposal_generates_consensus_history(self, client, temp_data_dir):
+    def test_create_proposal_generates_consensus_history(self, client, csrf_token, temp_data_dir):
         """
         Test: New proposal via web form has initial consensus history entry
 
@@ -292,6 +305,7 @@ class TestCreateProposalPost:
             'description': 'Testing consensus history',
             'proposer': 'web-user',
             'urgency': 'high',
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
 
         yaml_files = list(temp_data_dir.glob('*.yaml'))
@@ -306,7 +320,7 @@ class TestCreateProposalPost:
         assert 'high' in entry['details']
 
     @pytest.mark.routes
-    def test_create_proposal_visible_in_api_after_creation(self, client, temp_data_dir):
+    def test_create_proposal_visible_in_api_after_creation(self, client, csrf_token, temp_data_dir):
         """
         Test: A proposal created via POST shows up in the API immediately
 
@@ -316,6 +330,7 @@ class TestCreateProposalPost:
             'title': 'API Visibility Test',
             'description': 'Should appear in API right away',
             'proposer': 'test-agent',
+            '_csrf_token': csrf_token,
         }, follow_redirects=True)
 
         api_response = client.get('/api/proposals')

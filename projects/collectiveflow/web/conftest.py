@@ -206,10 +206,44 @@ def temp_data_dir(monkeypatch):
     # load_proposals / get_proposal / save_proposal all use it.
     monkeypatch.setattr(app_module, 'storage', YAMLStorage(temp_dir))
 
+    # Also patch PROPOSALS_DIR so that update_proposal() (which writes
+    # directly to PROPOSALS_DIR rather than through the storage abstraction)
+    # targets the temp directory too.
+    monkeypatch.setattr(app_module, 'PROPOSALS_DIR', proposals_dir)
+
     yield proposals_dir
 
     # Cleanup after test
     shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@pytest.fixture
+def csrf_token(client):
+    """
+    Fixture: CSRF Token for POST/PUT/DELETE Requests
+
+    The app's csrf_protect() before_request hook rejects any non-API
+    POST/PUT/DELETE that lacks a valid _csrf_token matching the session.
+    This fixture performs a GET to establish a session, then extracts
+    the CSRF token so tests can include it in form data.
+
+    Usage in tests:
+        def test_something(self, client, csrf_token, temp_data_dir):
+            form_data = {'title': 'X', 'description': 'Y', '_csrf_token': csrf_token}
+            response = client.post('/create', data=form_data)
+
+    Args:
+        client: Flask test client fixture (with session support)
+
+    Returns:
+        str: A valid CSRF token matching the current session
+    """
+    # Make a GET request to establish a session and generate a CSRF token
+    with client.session_transaction() as sess:
+        import secrets
+        token = secrets.token_hex(32)
+        sess['_csrf_token'] = token
+    return token
 
 
 @pytest.fixture

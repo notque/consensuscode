@@ -368,12 +368,13 @@ class TestCreateProposalRoutes:
         assert 'description' in data.lower()
 
     @pytest.mark.routes
-    def test_create_proposal_success(self, client, temp_data_dir, proposal_form_data):
+    def test_create_proposal_success(self, client, csrf_token, temp_data_dir, proposal_form_data):
         """
         Test: Submitting valid proposal data creates new proposal
 
         Members should be able to successfully submit proposals.
         """
+        proposal_form_data['_csrf_token'] = csrf_token
         response = client.post('/create', data=proposal_form_data, follow_redirects=True)
 
         # Should redirect to the new proposal's detail page
@@ -384,7 +385,7 @@ class TestCreateProposalRoutes:
         assert len(yaml_files) >= 1
 
     @pytest.mark.routes
-    def test_create_proposal_missing_title(self, client, proposal_form_data):
+    def test_create_proposal_missing_title(self, client, csrf_token, proposal_form_data):
         """
         Test: Creating proposal without title shows error
 
@@ -393,6 +394,7 @@ class TestCreateProposalRoutes:
         # Remove title from form data
         form_data = proposal_form_data.copy()
         form_data['title'] = ''
+        form_data['_csrf_token'] = csrf_token
 
         response = client.post('/create', data=form_data, follow_redirects=True)
 
@@ -402,7 +404,7 @@ class TestCreateProposalRoutes:
         assert b'required' in response.data.lower() or b'error' in response.data.lower()
 
     @pytest.mark.routes
-    def test_create_proposal_missing_description(self, client, proposal_form_data):
+    def test_create_proposal_missing_description(self, client, csrf_token, proposal_form_data):
         """
         Test: Creating proposal without description shows error
 
@@ -410,6 +412,7 @@ class TestCreateProposalRoutes:
         """
         form_data = proposal_form_data.copy()
         form_data['description'] = ''
+        form_data['_csrf_token'] = csrf_token
 
         response = client.post('/create', data=form_data, follow_redirects=True)
 

@@ -14,9 +14,12 @@ import logging
 import secrets
 import yaml
 import uuid
+import queue
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, abort
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, abort, Response
 from storage import get_storage
 
 app = Flask(__name__)
@@ -31,6 +34,97 @@ cors_origins = os.environ.get('CORS_ORIGINS', '').strip()
 if cors_origins:
     from flask_cors import CORS
     CORS(app, origins=cors_origins.split(','))
+
+# ---------- SSE Event Bus ----------
+# Teaching note (50/50 teaching/doing):
+#
+# Server-Sent Events (SSE) is a W3C standard where the server pushes events
+# to clients over a long-lived HTTP connection. Unlike WebSockets, SSE is:
+#   - Unidirectional (server -> client only), which is perfect for notifications
+#   - Built on plain HTTP, so it works through proxies and with curl
+#   - Auto-reconnects (the browser's EventSource API handles this natively)
+#   - Zero extra dependencies in Flask — just a streaming Response
+#
+# The pattern below uses an in-memory pub/sub bus. Each SSE client gets its
+# own queue. When an event fires, it's pushed to every connected queue.
+# This is intentionally simple — no Redis, no external broker. It works for
+# a local-only collective where all agents connect to the same process.
+#
+# Limitation: events are not persisted. If an agent disconnects and
+# reconnects, it won't receive events that fired while it was away.
+# For catch-up, agents should poll GET /api/proposals on reconnect.
+# The Last-Event-Id header support below helps with brief disconnections.
+
+
+class EventBus:
+    """In-memory pub/sub for SSE event distribution.
+
+    Thread-safe. Each subscriber gets an independent queue so slow consumers
+    don't block fast ones. Queues have a max size to bound memory — if a
+    consumer falls behind, oldest events are silently dropped.
+    """
+
+    def __init__(self, maxsize=128):
+        self._lock = threading.Lock()
+        self._subscribers: list[queue.Queue] = []
+        self._event_id = 0
+        self._maxsize = maxsize
+
+    def subscribe(self) -> queue.Queue:
+        """Register a new subscriber. Returns a queue to read events from."""
+        q: queue.Queue = queue.Queue(maxsize=self._maxsize)
+        with self._lock:
+            self._subscribers.append(q)
+        return q
+
+    def unsubscribe(self, q: queue.Queue):
+        """Remove a subscriber (call when client disconnects)."""
+        with self._lock:
+            try:
+                self._subscribers.remove(q)
+            except ValueError:
+                pass
+
+    def publish(self, event_type: str, data: dict):
+        """Broadcast an event to all connected subscribers.
+
+        Teaching note: We increment a monotonic event ID so clients can use
+        the Last-Event-Id header to detect missed events after reconnection.
+        The SSE spec says: if the client reconnects, the browser sends
+        Last-Event-Id automatically. We don't do full replay here (that
+        would need persistent storage), but the ID lets clients know they
+        missed something and should do a full poll.
+        """
+        with self._lock:
+            self._event_id += 1
+            event = {
+                'id': self._event_id,
+                'type': event_type,
+                'data': data,
+                'timestamp': datetime.now().isoformat(),
+            }
+            dead_queues = []
+            for q in self._subscribers:
+                try:
+                    q.put_nowait(event)
+                except queue.Full:
+                    # Consumer is too slow — drop oldest event to make room
+                    try:
+                        q.get_nowait()
+                        q.put_nowait(event)
+                    except (queue.Empty, queue.Full):
+                        dead_queues.append(q)
+            # Clean up any broken queues
+            for q in dead_queues:
+                try:
+                    self._subscribers.remove(q)
+                except ValueError:
+                    pass
+
+
+# Single global event bus — shared across all request threads.
+event_bus = EventBus()
+
 
 # ---------- CSRF Protection ----------
 # Lightweight token-based CSRF using Flask sessions. No extra dependency needed.
@@ -273,6 +367,15 @@ def api_create_proposal():
     proposal_id = save_proposal(proposal_data)
     proposal = get_proposal(proposal_id)
 
+    # Notify SSE subscribers
+    event_bus.publish('proposal_created', {
+        'proposal_id': proposal_id,
+        'title': title,
+        'proposer': proposal_data['proposer'],
+        'urgency': urgency,
+        'affected_areas': affected_areas,
+    })
+
     response = jsonify(proposal)
     response.status_code = 201
     response.headers['Location'] = f'/api/proposals/{proposal_id}'
@@ -361,6 +464,15 @@ def api_add_consultation(proposal_id):
     })
 
     update_proposal(proposal_id, proposal)
+
+    # Notify SSE subscribers
+    event_bus.publish('consultation_added', {
+        'proposal_id': proposal_id,
+        'proposal_title': proposal.get('title', ''),
+        'contributor': contributor,
+        'support': consultation_entry['support'],
+        'consultation_count': len(proposal.get('consultations', [])),
+    })
 
     return jsonify({
         'message': 'Consultation added',
@@ -453,6 +565,28 @@ def api_update_status(proposal_id):
 
     update_proposal(proposal_id, proposal)
 
+    # Notify SSE subscribers — status_changed for all transitions
+    event_bus.publish('status_changed', {
+        'proposal_id': proposal_id,
+        'proposal_title': proposal.get('title', ''),
+        'previous_status': current_status,
+        'new_status': new_status,
+        'actor': actor,
+        'reason': reason,
+    })
+
+    # Additional consensus_reached event when a proposal reaches consensus.
+    # Teaching note: this is a semantic event on top of the mechanical
+    # status_changed event. Agents that only care about "did we agree?" can
+    # filter to just consensus_reached without parsing status fields.
+    if new_status == 'consensus':
+        event_bus.publish('consensus_reached', {
+            'proposal_id': proposal_id,
+            'proposal_title': proposal.get('title', ''),
+            'actor': actor,
+            'consultation_count': len(proposal.get('consultations', [])),
+        })
+
     return jsonify({
         'message': f'Status updated to {new_status}',
         'proposal_id': proposal_id,
@@ -495,6 +629,99 @@ def api_collective_stats():
         'contributor_count': len(contributors),
         'contributors': sorted(contributors),
     })
+
+
+# ---------- SSE Streaming Endpoint ----------
+
+@app.route('/api/events')
+def api_events():
+    """Server-Sent Events stream for real-time proposal notifications.
+
+    Teaching note (50/50 teaching/doing):
+
+    SSE uses a simple text protocol over HTTP. Each event looks like:
+
+        id: 42
+        event: proposal_created
+        data: {"proposal_id": "proposal-2026-03-24-abc123", ...}
+
+        (blank line ends the event)
+
+    Clients connect with:
+        - Browser: new EventSource('/api/events')
+        - curl:    curl -N http://localhost:5000/api/events
+
+    The endpoint supports optional query parameters for filtering:
+        ?types=proposal_created,status_changed  — only receive these event types
+        ?proposal_id=proposal-2026-03-24-abc    — only events for this proposal
+
+    No authentication required — horizontal principle. Any agent or tool can
+    subscribe. This directly addresses the consensus assessment finding that
+    agents miss proposals because there's no notification mechanism.
+
+    Implementation: Flask's Response with a generator function creates the
+    long-lived connection. We subscribe to the global event_bus and yield
+    SSE-formatted strings as events arrive. When the client disconnects,
+    the generator's finally block cleans up the subscription.
+    """
+    # Parse optional filters from query string
+    type_filter = set()
+    types_param = request.args.get('types', '').strip()
+    if types_param:
+        type_filter = set(t.strip() for t in types_param.split(',') if t.strip())
+
+    proposal_filter = request.args.get('proposal_id', '').strip() or None
+
+    def stream():
+        q = event_bus.subscribe()
+        try:
+            # Send an initial comment so the client knows the connection is alive.
+            # SSE spec: lines starting with ':' are comments, ignored by EventSource
+            # but useful for keeping proxies from closing idle connections.
+            yield ': connected to CollectiveFlow event stream\n\n'
+
+            while True:
+                try:
+                    # Block for up to 30 seconds, then send a keepalive comment.
+                    # Teaching note: without periodic data, reverse proxies and
+                    # load balancers may close "idle" connections (common timeout
+                    # is 60s). A 30s heartbeat prevents that.
+                    event = q.get(timeout=30)
+                except queue.Empty:
+                    # No event within 30s — send keepalive
+                    yield ': keepalive\n\n'
+                    continue
+
+                # Apply filters
+                if type_filter and event['type'] not in type_filter:
+                    continue
+                if proposal_filter:
+                    event_proposal = event.get('data', {}).get('proposal_id', '')
+                    if event_proposal != proposal_filter:
+                        continue
+
+                # Format as SSE
+                yield f"id: {event['id']}\n"
+                yield f"event: {event['type']}\n"
+                yield f"data: {json.dumps(event['data'], default=str)}\n"
+                yield '\n'  # Blank line terminates the event
+
+        except GeneratorExit:
+            # Client disconnected — clean up
+            pass
+        finally:
+            event_bus.unsubscribe(q)
+
+    return Response(
+        stream(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',  # Disable nginx buffering if present
+            'Connection': 'keep-alive',
+        },
+    )
+
 
 @app.route('/proposals')
 def proposals_list():
@@ -711,6 +938,15 @@ def create_proposal():
         # Save proposal
         proposal_id = save_proposal(proposal_data)
 
+        # Notify SSE subscribers (same event shape as the API route)
+        event_bus.publish('proposal_created', {
+            'proposal_id': proposal_id,
+            'title': proposal_data['title'],
+            'proposer': proposal_data['proposer'],
+            'urgency': proposal_data['urgency'],
+            'affected_areas': proposal_data['affected_areas'],
+        })
+
         flash('Proposal submitted successfully!', 'success')
         return redirect(url_for('proposal_detail', proposal_id=proposal_id))
 
@@ -777,6 +1013,15 @@ def add_consultation(proposal_id):
         if json_path.exists():
             with open(json_path, 'w') as f:
                 json.dump(proposal, f, indent=2, default=str)
+
+        # Notify SSE subscribers (same event shape as the API route)
+        event_bus.publish('consultation_added', {
+            'proposal_id': proposal_id,
+            'proposal_title': proposal.get('title', ''),
+            'contributor': contributor,
+            'support': consultation['support'],
+            'consultation_count': len(proposal.get('consultations', [])),
+        })
 
         flash(f'Consultation input from "{contributor}" recorded. Thank you for participating!', 'success')
         return redirect(url_for('proposal_detail', proposal_id=proposal_id) + '#consultations-heading')

@@ -198,7 +198,7 @@ The collective executed a massive build-out session spanning all four projects (
 | Agent | File | Lines |
 |-------|------|-------|
 | consensus-base | `agents/consensus-base.md` | 190 |
-| consensus-coordinator | `agents/consensus-cordinator.md` | 208 |
+| consensus-coordinator | `agents/consensus-coordinator.md` | 208 |
 | product-steward | `agents/product-steward.md` | 191 |
 | go-systems-developer | `agents/go-systems-developer.md` | 232 |
 | flask-web-developer | `agents/flask-web-developer.md` | 270 |
@@ -260,6 +260,6 @@ The collective executed a massive build-out session spanning all four projects (
 4. **Address agenda-setting monopoly**: Enable agents to independently create proposals, not just respond to `cli-user` submissions.
 5. **Raise Bluesky quorum defaults**: Current 3-of-16 minimum is too low for authentic collective voice.
 6. **Update agent registry**: `collective/tracking/agent-registry.md` only lists 7 of 16 agents.
-7. **Fix coordinator typo**: `agents/consensus-cordinator.md` should be `consensus-coordinator.md`.
+7. ~~**Fix coordinator typo**~~: Fixed. `agents/consensus-cordinator.md` renamed to `consensus-coordinator.md`.
 8. **Run full test suites**: Verify all 5,863 lines of tests pass across Go and Python projects.
 9. **Production deployment**: Test Docker Compose multi-service setup end-to-end.

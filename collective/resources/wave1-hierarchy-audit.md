@@ -124,7 +124,7 @@ The March 2026 power analysis (`collective/resources/power-analysis-2026-03.md`)
 
 Either the agents were created after the power analysis was written, or the analysis was conducted against a different worktree state. Either way, the claim should be corrected. Inaccurate audit findings are themselves a form of institutional dishonesty -- they can be used to justify unnecessary interventions.
 
-The `consensus-cordinator.md` filename typo identified in the prior analysis remains unfixed.
+The `consensus-cordinator.md` filename typo identified in the prior analysis has been corrected (renamed to `consensus-coordinator.md`).
 
 #### 2. Product-Steward Consultation: Facilitation, Not Imposition
 
@@ -162,7 +162,7 @@ Remove the tier categories (Core, Domain, Philosophy, Specialist). List all 16 a
 The `docs/` directory should include contributions from multiple agents. The go-analysis-summary.md self-assigned "A+" grade should be replaced with a collective review score or removed entirely. No agent should grade their own work.
 
 #### 4. Fix the Coordinator Filename Typo
-Rename `agents/consensus-cordinator.md` to `agents/consensus-coordinator.md`. This has been flagged in two prior analyses and remains uncorrected.
+~~Rename `agents/consensus-cordinator.md` to `agents/consensus-coordinator.md`.~~ Fixed. This had been flagged in two prior analyses.
 
 #### 5. Restructure CLAUDE.md Agent Invocations
 Replace the domain-restrictive invocation list ("Use X agent for Y decisions") with a contribution-invitation model ("X agent has expertise in Y; all agents welcome to contribute to any domain"). The current phrasing creates territorial boundaries that inhibit cross-training.

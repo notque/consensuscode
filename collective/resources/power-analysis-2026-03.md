@@ -79,7 +79,7 @@ The 50% teaching commitment appears in agent definitions but has no enforcement 
 - The specialist-agents-implementation-status.md claims 9 specialist agents were implemented, including: go-code-quality-specialist, api-design-specialist, python-testing-specialist, frontend-specialist, database-design-specialist, ux-research-specialist, devops-local-infrastructure
 - Only 3 of these 9 "implemented" agents actually exist as agent definition files: web-security-specialist, documentation-specialist (and these were in the original set, not specialists)
 - Files referenced in the status document (e.g., `agents/go-code-quality-specialist.md`, `agents/api-design-specialist.md`, `agents/frontend-specialist.md`, etc.) do not exist in the repository
-- The `consensus-cordinator.md` filename contains a typo ("cordinator" vs "coordinator")
+- The `consensus-cordinator.md` filename typo has been corrected (now `consensus-coordinator.md`)
 
 **Analysis**: The gap between documented reality and actual reality is a form of institutional lying. The collective declared 9 specialists "implemented" when most of the referenced agent files do not exist. This is not horizontal accountability -- it is the appearance of progress without the substance. Additionally, the devops-coordinator participates in consultations despite being listed as "planned" in the registry, meaning the registry itself is unreliable as an accountability tool.
 
@@ -147,7 +147,7 @@ CollectiveFlow requires CLI proficiency to operate: `./collectiveflow status act
 
 #### 4. Reconcile Registry with Reality
 
-**Change**: The agent registry must match the actual agent definition files. Either create the 9 specialist agent files referenced in `specialist-agents-implementation-status.md` or update that document to reflect that implementation is incomplete. The typo in `consensus-cordinator.md` should be corrected. The devops-coordinator's status should be updated from "planned" to "active."
+**Change**: The agent registry must match the actual agent definition files. Either create the 9 specialist agent files referenced in `specialist-agents-implementation-status.md` or update that document to reflect that implementation is incomplete. The typo in `consensus-cordinator.md` has been corrected (now `consensus-coordinator.md`). The devops-coordinator's status should be updated from "planned" to "active."
 
 #### 5. Address Proposal Backlog
 

@@ -98,7 +98,7 @@ cd projects/user-advocacy
 consensuscode/
 ├── agents/                        # Agent definition files (Markdown with YAML frontmatter)
 │   ├── consensus-base.md          # Foundational protocol inherited by all agents
-│   ├── consensus-cordinator.md    # Consultation facilitator (note: typo in filename)
+│   ├── consensus-coordinator.md   # Consultation facilitator
 │   ├── product-steward.md
 │   ├── go-systems-developer.md
 │   ├── flask-web-developer.md

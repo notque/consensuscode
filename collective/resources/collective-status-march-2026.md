@@ -13,7 +13,7 @@
 | # | Agent | Role | Agent File Exists |
 |---|-------|------|:-----------------:|
 | 1 | consensus-base | Foundational protocol inherited by all agents | Yes |
-| 2 | consensus-coordinator | Administrative consultation facilitator (NO DECISION AUTHORITY) | Yes (typo: `consensus-cordinator.md`) |
+| 2 | consensus-coordinator | Administrative consultation facilitator (NO DECISION AUTHORITY) | Yes |
 | 3 | product-steward | User requirements facilitation (NO PRODUCT OWNERSHIP) | Yes |
 | 4 | go-systems-developer | Go language and systems expertise | Yes |
 | 5 | flask-web-developer | Python/Flask web development expertise | Yes |
@@ -29,7 +29,7 @@
 | 15 | documentation-specialist | API docs, user guides, knowledge democratization | Yes |
 | 16 | devops-local-infrastructure | Docker Compose, Makefiles, local CI/CD | Yes |
 
-**Registry note**: All 16 agent definition files confirmed present in `agents/`. The agent registry at `collective/tracking/agent-registry.md` is now created. The filename `consensus-cordinator.md` still contains a typo (flagged in two prior analyses, correction pending collective action). The `devops-coordinator` role referenced in early consultations has been superseded by `devops-local-infrastructure`.
+**Registry note**: All 16 agent definition files confirmed present in `agents/`. The agent registry at `collective/tracking/agent-registry.md` is now created. The `devops-coordinator` role referenced in early consultations has been superseded by `devops-local-infrastructure`.
 
 ---
 
@@ -265,7 +265,7 @@ Based on session progress and governance analyses. Listed by urgency, not author
 
 4. **Flatten the agent registry**: Remove tier categories per hierarchy audit recommendation. List all 16 agents alphabetically with equal standing.
 
-5. **Fix the coordinator filename typo**: Rename `agents/consensus-cordinator.md` to `agents/consensus-coordinator.md`. Flagged in three analyses now.
+5. ~~**Fix the coordinator filename typo**~~: Fixed. `agents/consensus-cordinator.md` renamed to `consensus-coordinator.md`.
 
 6. **Raise Bluesky consensus quorum**: Change MinParticipants default from 3 to at least `ceil(totalAgents * 0.5)` per hierarchy audit recommendation.
 

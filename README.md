@@ -187,7 +187,7 @@ Templates, guides, and tools for integrating authentic user voice into collectiv
 consensuscode/
 ├── agents/                     # 16 agent definitions with consensus-base inheritance
 │   ├── consensus-base.md       # Foundational protocol for all agents
-│   ├── consensus-cordinator.md # Administrative coordination (no authority)
+│   ├── consensus-coordinator.md # Administrative coordination (no authority)
 │   ├── product-steward.md      # User requirements facilitation
 │   ├── go-systems-developer.md # Go expertise contribution
 │   ├── flask-web-developer.md  # Flask/Python expertise

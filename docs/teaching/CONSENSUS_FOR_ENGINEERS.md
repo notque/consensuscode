@@ -91,7 +91,7 @@ Currently implemented by `FileStore` (YAML files on disk). The interface exists 
 
 ## The Coordinator Pattern: Secretary, Not Manager
 
-Read `agents/consensus-cordinator.md` through an engineering lens. The coordinator is a message router, not a decision engine:
+Read `agents/consensus-coordinator.md` through an engineering lens. The coordinator is a message router, not a decision engine:
 
 - **Can**: Route messages to agents, track who has responded, document outcomes.
 - **Cannot**: Filter messages, modify content, make decisions, skip agents.

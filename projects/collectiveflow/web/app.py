@@ -17,6 +17,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, abort
+from storage import get_storage
 
 app = Flask(__name__)
 
@@ -60,55 +61,22 @@ def csrf_protect():
 DATA_DIR = os.environ.get('COLLECTIVEFLOW_DATA', '../data')
 PROPOSALS_DIR = Path(DATA_DIR) / 'proposals'
 
-def load_proposals():
-    """Load all proposals from the data directory."""
-    proposals = []
-    
-    if not PROPOSALS_DIR.exists():
-        return proposals
-    
-    for yaml_file in PROPOSALS_DIR.glob('*.yaml'):
-        try:
-            with open(yaml_file, 'r') as f:
-                proposal = yaml.safe_load(f)
-                if proposal:
-                    proposals.append(proposal)
-        except Exception as e:
-            print(f"Error loading {yaml_file}: {e}")
-    
-    # Sort by date, newest first
-    # Normalize dates to strings for consistent comparison (YAML may parse dates as datetime objects)
-    def sort_key(p):
-        date = p.get('date', '')
-        if isinstance(date, datetime):
-            return date.isoformat()
-        return str(date)
+# Storage abstraction: supports YAML (default) or SQLite backends.
+# Set STORAGE_BACKEND=sqlite to use SQLite; defaults to YAML for
+# backwards compatibility.  The storage object satisfies the
+# StorageBackend protocol from storage.py.
+storage = get_storage(DATA_DIR)
 
-    proposals.sort(key=sort_key, reverse=True)
-    return proposals
+
+def load_proposals():
+    """Load all proposals via the configured storage backend."""
+    return storage.load_proposals()
+
 
 def get_proposal(proposal_id):
-    """Load a specific proposal by ID.
+    """Load a specific proposal by ID via the configured storage backend."""
+    return storage.get_proposal(proposal_id)
 
-    Security: validates proposal_id to prevent path traversal attacks.
-    Only alphanumeric characters, hyphens, and underscores are allowed.
-    """
-    if not re.match(r'^[a-zA-Z0-9_-]+$', proposal_id):
-        return None
-
-    try:
-        yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
-
-        # Defense in depth: verify resolved path stays within PROPOSALS_DIR
-        yaml_path.resolve().relative_to(PROPOSALS_DIR.resolve())
-
-        if yaml_path.exists():
-            with open(yaml_path, 'r') as f:
-                return yaml.safe_load(f)
-    except (ValueError, OSError):
-        return None
-
-    return None
 
 VALID_STATUSES = ['proposed', 'consultation', 'consensus', 'implemented', 'blocked', 'withdrawn']
 VALID_URGENCIES = ['low', 'medium', 'high', 'emergency']
@@ -136,37 +104,8 @@ def api_error(message, code, http_status=400):
 
 
 def save_proposal(proposal_data):
-    """Save a new proposal to the data directory."""
-    # Ensure proposals directory exists
-    PROPOSALS_DIR.mkdir(parents=True, exist_ok=True)
-
-    # Generate unique ID if not provided
-    if 'id' not in proposal_data:
-        proposal_data['id'] = f"proposal-{datetime.now().strftime('%Y-%m-%d')}-{str(uuid.uuid4())[:8]}"
-
-    # Add metadata
-    proposal_data['date'] = datetime.now().isoformat()
-    proposal_data['status'] = 'proposed'
-    proposal_data['consensus_status'] = 'New proposal submitted'
-    proposal_data['consensus_history'] = [{
-        'timestamp': proposal_data['date'],
-        'event': 'proposal_created',
-        'actor': proposal_data.get('proposer', 'web-user'),
-        'details': f"Created with urgency: {proposal_data.get('urgency', 'medium')}"
-    }]
-    proposal_data['consultations'] = []
-
-    # Save to YAML file
-    yaml_path = PROPOSALS_DIR / f"{proposal_data['id']}.yaml"
-    with open(yaml_path, 'w') as f:
-        yaml.safe_dump(proposal_data, f, default_flow_style=False, sort_keys=False)
-
-    # Also save JSON for API compatibility
-    json_path = PROPOSALS_DIR / f"{proposal_data['id']}.json"
-    with open(json_path, 'w') as f:
-        json.dump(proposal_data, f, indent=2)
-
-    return proposal_data['id']
+    """Save a new proposal via the configured storage backend."""
+    return storage.save_proposal(proposal_data)
 
 
 def update_proposal(proposal_id, proposal_data):

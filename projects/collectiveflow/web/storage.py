@@ -150,15 +150,19 @@ class YAMLStorage:
 
         yaml_path = self.proposals_dir / f"{proposal_id}.yaml"
 
-        # Defense in depth: verify resolved path stays within proposals dir
+        # Defense in depth: verify resolved path stays within proposals dir.
+        # OSError covers platform limits like filename-too-long.
         try:
             yaml_path.resolve().relative_to(self.proposals_dir.resolve())
-        except ValueError:
+        except (ValueError, OSError):
             return None
 
-        if yaml_path.exists():
-            with open(yaml_path, "r") as f:
-                return yaml.safe_load(f)
+        try:
+            if yaml_path.exists():
+                with open(yaml_path, "r") as f:
+                    return yaml.safe_load(f)
+        except OSError:
+            return None
 
         return None
 

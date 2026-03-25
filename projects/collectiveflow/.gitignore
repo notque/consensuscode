@@ -18,6 +18,9 @@
 *.db
 *.db-wal
 *.db-shm
+# Exception: the migrated collectiveflow database is committed so any agent
+# can use SQLite immediately without running the migration script.
+!data/collectiveflow.db
 
 # Python bytecode
 __pycache__/

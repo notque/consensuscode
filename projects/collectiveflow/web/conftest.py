@@ -20,6 +20,7 @@ from datetime import datetime
 import yaml
 import pytest
 from app import app as flask_app
+from storage import YAMLStorage
 
 
 # Test Data Fixtures - Sample Proposals
@@ -199,6 +200,10 @@ def temp_data_dir(monkeypatch):
 
     import app as app_module
     from storage import YAMLStorage
+    monkeypatch.setattr(app_module, 'storage', YAMLStorage(temp_dir))
+
+    # Point the storage abstraction at the temp directory so that
+    # load_proposals / get_proposal / save_proposal all use it.
     monkeypatch.setattr(app_module, 'storage', YAMLStorage(temp_dir))
 
     yield proposals_dir

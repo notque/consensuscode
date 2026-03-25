@@ -791,6 +791,8 @@ def urgency_color(urgency):
         'high': 'text-orange-600',
         'emergency': 'text-red-600'
     }
+    if not isinstance(urgency, str):
+        return 'text-gray-600'
     return color_map.get(urgency, 'text-gray-600')
 
 if __name__ == '__main__':

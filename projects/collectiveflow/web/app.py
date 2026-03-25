@@ -93,33 +93,57 @@ def get_proposal(proposal_id):
     Security: validates proposal_id to prevent path traversal attacks.
     Only alphanumeric characters, hyphens, and underscores are allowed.
     """
-    # Reject any proposal_id that could be used for path traversal
     if not re.match(r'^[a-zA-Z0-9_-]+$', proposal_id):
         return None
 
-    yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
-
-    # Defense in depth: verify resolved path stays within PROPOSALS_DIR
     try:
+        yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
+
+        # Defense in depth: verify resolved path stays within PROPOSALS_DIR
         yaml_path.resolve().relative_to(PROPOSALS_DIR.resolve())
-    except ValueError:
+
+        if yaml_path.exists():
+            with open(yaml_path, 'r') as f:
+                return yaml.safe_load(f)
+    except (ValueError, OSError):
         return None
 
-    if yaml_path.exists():
-        with open(yaml_path, 'r') as f:
-            return yaml.safe_load(f)
-
     return None
+
+VALID_STATUSES = ['proposed', 'consultation', 'consensus', 'implemented', 'blocked', 'withdrawn']
+VALID_URGENCIES = ['low', 'medium', 'high', 'emergency']
+
+# Valid status transitions — each status maps to the statuses it can move to.
+# This prevents illogical jumps (e.g., going from 'withdrawn' to 'implemented').
+STATUS_TRANSITIONS = {
+    'proposed': ['consultation', 'withdrawn'],
+    'consultation': ['consensus', 'blocked', 'withdrawn'],
+    'consensus': ['implemented', 'blocked', 'withdrawn'],
+    'implemented': [],
+    'blocked': ['consultation', 'withdrawn'],
+    'withdrawn': [],
+}
+
+
+def api_error(message, code, http_status=400):
+    """Return a consistent JSON error response.
+
+    Teaching note: Every API should have a single, predictable error shape.
+    Clients can always check for the "error" key to know something went wrong,
+    and use the "code" key for programmatic handling (e.g., retry logic).
+    """
+    return jsonify({'error': message, 'code': code}), http_status
+
 
 def save_proposal(proposal_data):
     """Save a new proposal to the data directory."""
     # Ensure proposals directory exists
     PROPOSALS_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Generate unique ID if not provided
     if 'id' not in proposal_data:
         proposal_data['id'] = f"proposal-{datetime.now().strftime('%Y-%m-%d')}-{str(uuid.uuid4())[:8]}"
-    
+
     # Add metadata
     proposal_data['date'] = datetime.now().isoformat()
     proposal_data['status'] = 'proposed'
@@ -131,18 +155,35 @@ def save_proposal(proposal_data):
         'details': f"Created with urgency: {proposal_data.get('urgency', 'medium')}"
     }]
     proposal_data['consultations'] = []
-    
+
     # Save to YAML file
     yaml_path = PROPOSALS_DIR / f"{proposal_data['id']}.yaml"
     with open(yaml_path, 'w') as f:
         yaml.safe_dump(proposal_data, f, default_flow_style=False, sort_keys=False)
-    
+
     # Also save JSON for API compatibility
     json_path = PROPOSALS_DIR / f"{proposal_data['id']}.json"
     with open(json_path, 'w') as f:
         json.dump(proposal_data, f, indent=2)
-    
+
     return proposal_data['id']
+
+
+def update_proposal(proposal_id, proposal_data):
+    """Update an existing proposal on disk.
+
+    Teaching note: Separating create vs. update keeps each function's
+    responsibility clear.  save_proposal() adds default metadata for new
+    proposals; update_proposal() writes the already-complete dict back
+    without adding extra fields.
+    """
+    yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
+    with open(yaml_path, 'w') as f:
+        yaml.safe_dump(proposal_data, f, default_flow_style=False, sort_keys=False)
+
+    json_path = PROPOSALS_DIR / f"{proposal_id}.json"
+    with open(json_path, 'w') as f:
+        json.dump(proposal_data, f, indent=2, default=str)
 
 @app.route('/')
 def index():
@@ -176,24 +217,345 @@ def proposal_detail(proposal_id):
     
     return render_template('proposal.html', proposal=proposal)
 
-@app.route('/api/proposals')
+@app.route('/api/proposals', methods=['GET'])
 def api_proposals():
-    """API endpoint for proposals list."""
+    """API endpoint for proposals list.
+
+    Supports optional query-string filters:
+        ?status=consultation   — filter by status
+        ?urgency=high          — filter by urgency
+
+    Teaching note: GET endpoints should be safe (no side-effects) and
+    idempotent. Filtering via query parameters keeps the URL clean and
+    cache-friendly.
+    """
     proposals = load_proposals()
+
+    # Optional filtering
+    status_filter = request.args.get('status')
+    if status_filter:
+        proposals = [p for p in proposals if p.get('status') == status_filter]
+
+    urgency_filter = request.args.get('urgency')
+    if urgency_filter:
+        proposals = [p for p in proposals if p.get('urgency') == urgency_filter]
+
     return jsonify({
         'proposals': proposals,
         'count': len(proposals)
     })
 
+
+@app.route('/api/proposals/<proposal_id>', methods=['GET'])
+def api_proposal_by_id(proposal_id):
+    """API endpoint for a specific proposal.
+
+    Teaching note: We use /api/proposals/<id> (plural resource with ID)
+    rather than /api/proposal/<id>.  The plural form is the REST convention
+    because the ID selects one item *from the collection*.  The old
+    /api/proposal/<id> route is kept below for backwards compatibility.
+    """
+    proposal = get_proposal(proposal_id)
+
+    if not proposal:
+        return api_error('Proposal not found', 'NOT_FOUND', 404)
+
+    return jsonify(proposal)
+
+
+# Backwards-compatible alias — existing clients may use the singular form.
 @app.route('/api/proposal/<proposal_id>')
 def api_proposal(proposal_id):
-    """API endpoint for a specific proposal."""
+    """Legacy endpoint — redirects internally to the canonical route."""
+    return api_proposal_by_id(proposal_id)
+
+
+@app.route('/api/proposals', methods=['POST'])
+def api_create_proposal():
+    """Create a proposal via JSON API.
+
+    Teaching note: POST to the collection URL is the REST way to create a
+    new resource.  We return 201 (Created) with a Location header pointing
+    to the new resource — this lets clients find the resource without
+    parsing the body.
+
+    Expected JSON body:
+        {
+            "title": "string (required)",
+            "description": "string (required)",
+            "proposer": "string (optional, defaults to 'api-user')",
+            "urgency": "low|medium|high|emergency (optional, defaults to 'medium')",
+            "affected_areas": ["string"] (optional)
+        }
+    """
+    # Require JSON content type
+    if not request.is_json:
+        return api_error(
+            'Request must be JSON (set Content-Type: application/json)',
+            'INVALID_CONTENT_TYPE',
+            415
+        )
+
+    data = request.get_json()
+
+    # --- Input validation ---
+    errors = []
+    title = (data.get('title') or '').strip()
+    description = (data.get('description') or '').strip()
+
+    if not title:
+        errors.append('title is required')
+    if not description:
+        errors.append('description is required')
+
+    urgency = data.get('urgency', 'medium')
+    if urgency not in VALID_URGENCIES:
+        errors.append(f'urgency must be one of: {", ".join(VALID_URGENCIES)}')
+
+    affected_areas = data.get('affected_areas', [])
+    if not isinstance(affected_areas, list):
+        errors.append('affected_areas must be a list')
+
+    if errors:
+        return api_error(
+            '; '.join(errors),
+            'VALIDATION_ERROR',
+            422
+        )
+
+    proposal_data = {
+        'title': title,
+        'description': description,
+        'proposer': (data.get('proposer') or 'api-user').strip(),
+        'urgency': urgency,
+        'affected_areas': affected_areas,
+    }
+
+    proposal_id = save_proposal(proposal_data)
     proposal = get_proposal(proposal_id)
-    
+
+    response = jsonify(proposal)
+    response.status_code = 201
+    response.headers['Location'] = f'/api/proposals/{proposal_id}'
+    return response
+
+
+@app.route('/api/proposals/<proposal_id>/consultation', methods=['POST'])
+def api_add_consultation(proposal_id):
+    """Add consultation input to a proposal.
+
+    Teaching note: Consultation is a *sub-resource* of a proposal.  POSTing
+    to /proposals/<id>/consultation adds a new entry to the consultations
+    list.  This mirrors how the collective works: any agent can contribute
+    input at any time, and every contribution is recorded.
+
+    Expected JSON body:
+        {
+            "contributor": "string (required)",
+            "input": "string (required)",
+            "support": true|false (optional),
+            "concerns": ["string"] (optional)
+        }
+    """
+    if not request.is_json:
+        return api_error(
+            'Request must be JSON (set Content-Type: application/json)',
+            'INVALID_CONTENT_TYPE',
+            415
+        )
+
+    proposal = get_proposal(proposal_id)
     if not proposal:
-        return jsonify({'error': 'Proposal not found'}), 404
-    
-    return jsonify(proposal)
+        return api_error('Proposal not found', 'NOT_FOUND', 404)
+
+    # Cannot add consultation to terminal statuses
+    if proposal.get('status') in ('implemented', 'withdrawn'):
+        return api_error(
+            f'Cannot add consultation to a proposal with status "{proposal["status"]}"',
+            'INVALID_STATE',
+            409
+        )
+
+    data = request.get_json()
+
+    # --- Input validation ---
+    errors = []
+    contributor = (data.get('contributor') or '').strip()
+    input_text = (data.get('input') or '').strip()
+
+    if not contributor:
+        errors.append('contributor is required')
+    if not input_text:
+        errors.append('input is required')
+
+    concerns = data.get('concerns', [])
+    if not isinstance(concerns, list):
+        errors.append('concerns must be a list of strings')
+
+    if errors:
+        return api_error('; '.join(errors), 'VALIDATION_ERROR', 422)
+
+    now = datetime.now().isoformat()
+
+    consultation_entry = {
+        'contributor': contributor,
+        'timestamp': now,
+        'input': input_text,
+        'support': bool(data.get('support', True)),
+    }
+    if concerns:
+        consultation_entry['concerns'] = concerns
+
+    # Append to proposal
+    if 'consultations' not in proposal:
+        proposal['consultations'] = []
+    proposal['consultations'].append(consultation_entry)
+
+    # Record in consensus history
+    if 'consensus_history' not in proposal:
+        proposal['consensus_history'] = []
+    proposal['consensus_history'].append({
+        'timestamp': now,
+        'event': 'consultation_added',
+        'actor': contributor,
+        'details': f'{"Support" if consultation_entry["support"] else "Concern"}: {input_text[:80]}'
+    })
+
+    update_proposal(proposal_id, proposal)
+
+    return jsonify({
+        'message': 'Consultation added',
+        'consultation': consultation_entry,
+        'proposal_id': proposal_id,
+    }), 201
+
+
+@app.route('/api/proposals/<proposal_id>/status', methods=['PUT'])
+def api_update_status(proposal_id):
+    """Advance or change the status of a proposal.
+
+    Teaching note: PUT to a specific sub-resource (/status) is appropriate
+    because we are *replacing* the status value.  We enforce valid state
+    transitions so proposals follow the collective's process.
+
+    Valid transitions:
+        proposed     -> consultation, withdrawn
+        consultation -> consensus, blocked, withdrawn
+        consensus    -> implemented, blocked, withdrawn
+        blocked      -> consultation, withdrawn
+        implemented  -> (terminal)
+        withdrawn    -> (terminal)
+
+    Expected JSON body:
+        {
+            "status": "string (required — target status)",
+            "actor": "string (required — who is making this change)",
+            "reason": "string (optional — rationale for the change)"
+        }
+    """
+    if not request.is_json:
+        return api_error(
+            'Request must be JSON (set Content-Type: application/json)',
+            'INVALID_CONTENT_TYPE',
+            415
+        )
+
+    proposal = get_proposal(proposal_id)
+    if not proposal:
+        return api_error('Proposal not found', 'NOT_FOUND', 404)
+
+    data = request.get_json()
+
+    # --- Input validation ---
+    errors = []
+    new_status = (data.get('status') or '').strip()
+    actor = (data.get('actor') or '').strip()
+
+    if not new_status:
+        errors.append('status is required')
+    elif new_status not in VALID_STATUSES:
+        errors.append(f'status must be one of: {", ".join(VALID_STATUSES)}')
+
+    if not actor:
+        errors.append('actor is required')
+
+    if errors:
+        return api_error('; '.join(errors), 'VALIDATION_ERROR', 422)
+
+    current_status = proposal.get('status', 'proposed')
+
+    # Check valid transition
+    allowed = STATUS_TRANSITIONS.get(current_status, [])
+    if new_status not in allowed:
+        return api_error(
+            f'Cannot transition from "{current_status}" to "{new_status}". '
+            f'Allowed transitions: {", ".join(allowed) if allowed else "none (terminal status)"}',
+            'INVALID_TRANSITION',
+            409
+        )
+
+    now = datetime.now().isoformat()
+    reason = (data.get('reason') or '').strip()
+
+    proposal['status'] = new_status
+    proposal['consensus_status'] = f'Status changed to {new_status}'
+
+    if 'consensus_history' not in proposal:
+        proposal['consensus_history'] = []
+    history_entry = {
+        'timestamp': now,
+        'event': 'status_changed',
+        'actor': actor,
+        'details': f'Status changed from {current_status} to {new_status}'
+    }
+    if reason:
+        history_entry['details'] += f' — {reason}'
+    proposal['consensus_history'].append(history_entry)
+
+    update_proposal(proposal_id, proposal)
+
+    return jsonify({
+        'message': f'Status updated to {new_status}',
+        'proposal_id': proposal_id,
+        'previous_status': current_status,
+        'new_status': new_status,
+    })
+
+
+@app.route('/api/collective/stats', methods=['GET'])
+def api_collective_stats():
+    """Collective statistics — a read-only snapshot of activity.
+
+    Teaching note: Stats endpoints are great candidates for caching headers
+    in production.  Here we keep it simple: compute on every request.  The
+    response shape is stable so clients can depend on it.
+    """
+    proposals = load_proposals()
+
+    status_counts = {}
+    for status in VALID_STATUSES:
+        status_counts[status] = 0
+    for p in proposals:
+        s = p.get('status', 'proposed')
+        if s in status_counts:
+            status_counts[s] += 1
+
+    contributors = set()
+    total_consultations = 0
+    for p in proposals:
+        contributors.add(p.get('proposer', 'anonymous'))
+        consultations = p.get('consultations', [])
+        total_consultations += len(consultations)
+        for c in consultations:
+            contributors.add(c.get('contributor', 'anonymous'))
+
+    return jsonify({
+        'total_proposals': len(proposals),
+        'status_counts': status_counts,
+        'total_consultations': total_consultations,
+        'contributor_count': len(contributors),
+        'contributors': sorted(contributors),
+    })
 
 @app.route('/proposals')
 def proposals_list():

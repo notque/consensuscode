@@ -8,19 +8,55 @@ without authentication or special roles - embodying true collective principles.
 """
 
 import os
+import re
 import json
+import logging
+import secrets
 import yaml
 import uuid
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
-from flask_cors import CORS
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, session, abort
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'collective-flow-dev-key')  # For flash messages
-CORS(app)  # Enable cross-origin requests for API compatibility
 
-# Configuration from environment or defaults
+# SECRET_KEY: use environment variable, or generate a random one per process for dev.
+# In production, always set SECRET_KEY in the environment.
+app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+
+# CORS: restrict to same-origin by default. If cross-origin API access is needed,
+# configure allowed origins explicitly via CORS_ORIGINS environment variable.
+cors_origins = os.environ.get('CORS_ORIGINS', '').strip()
+if cors_origins:
+    from flask_cors import CORS
+    CORS(app, origins=cors_origins.split(','))
+
+# ---------- CSRF Protection ----------
+# Lightweight token-based CSRF using Flask sessions. No extra dependency needed.
+
+def generate_csrf_token():
+    """Generate or retrieve a CSRF token for the current session."""
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = secrets.token_hex(32)
+    return session['_csrf_token']
+
+# Make csrf_token() available in all templates
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
+
+@app.before_request
+def csrf_protect():
+    """Reject POST/PUT/DELETE requests that lack a valid CSRF token."""
+    if request.method in ('POST', 'PUT', 'DELETE'):
+        # Skip CSRF check for JSON API endpoints (they use CORS + Accept headers)
+        if request.path.startswith('/api/'):
+            return
+        token = session.get('_csrf_token', None)
+        form_token = request.form.get('_csrf_token', None)
+        if not token or token != form_token:
+            abort(403)
+
+
+# ---------- Configuration ----------
 DATA_DIR = os.environ.get('COLLECTIVEFLOW_DATA', '../data')
 PROPOSALS_DIR = Path(DATA_DIR) / 'proposals'
 
@@ -52,13 +88,27 @@ def load_proposals():
     return proposals
 
 def get_proposal(proposal_id):
-    """Load a specific proposal by ID."""
+    """Load a specific proposal by ID.
+
+    Security: validates proposal_id to prevent path traversal attacks.
+    Only alphanumeric characters, hyphens, and underscores are allowed.
+    """
+    # Reject any proposal_id that could be used for path traversal
+    if not re.match(r'^[a-zA-Z0-9_-]+$', proposal_id):
+        return None
+
     yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
-    
+
+    # Defense in depth: verify resolved path stays within PROPOSALS_DIR
+    try:
+        yaml_path.resolve().relative_to(PROPOSALS_DIR.resolve())
+    except ValueError:
+        return None
+
     if yaml_path.exists():
         with open(yaml_path, 'r') as f:
             return yaml.safe_load(f)
-    
+
     return None
 
 def save_proposal(proposal_data):
@@ -216,34 +266,71 @@ def create_proposal_form():
 @app.route('/create', methods=['POST'])
 def create_proposal():
     """Handle proposal creation."""
+    VALID_URGENCIES = {'low', 'medium', 'high', 'emergency'}
+    VALID_AREAS = {
+        'infrastructure', 'web-interface', 'cli-tool', 'consensus-process',
+        'documentation', 'external-communication', 'agent-coordination',
+        'testing', 'other'
+    }
+
     try:
         # Collect form data
+        raw_urgency = request.form.get('urgency', 'medium')
+        raw_areas = request.form.getlist('affected_areas')
+
         proposal_data = {
-            'title': request.form.get('title', '').strip(),
-            'description': request.form.get('description', '').strip(),
-            'proposer': request.form.get('proposer', 'anonymous').strip(),
-            'urgency': request.form.get('urgency', 'medium'),
-            'affected_areas': request.form.getlist('affected_areas')
+            'title': request.form.get('title', '').strip()[:200],
+            'description': request.form.get('description', '').strip()[:5000],
+            'proposer': request.form.get('proposer', 'anonymous').strip()[:100],
+            'urgency': raw_urgency if raw_urgency in VALID_URGENCIES else 'medium',
+            'affected_areas': [a for a in raw_areas if a in VALID_AREAS]
         }
-        
+
         # Basic validation
         if not proposal_data['title']:
             flash('Title is required', 'error')
             return redirect(url_for('create_proposal_form'))
-        
+
         if not proposal_data['description']:
             flash('Description is required', 'error')
             return redirect(url_for('create_proposal_form'))
-        
+
         # Save proposal
         proposal_id = save_proposal(proposal_data)
-        
-        flash(f'Proposal "{proposal_data["title"]}" submitted successfully!', 'success')
+
+        flash('Proposal submitted successfully!', 'success')
         return redirect(url_for('proposal_detail', proposal_id=proposal_id))
-        
+
     except Exception as e:
-        flash(f'Error creating proposal: {str(e)}', 'error')
+        # Log the real error server-side; show generic message to user
+        logging.exception("Error creating proposal")
+        flash('Error creating proposal. Please try again.', 'error')
         return redirect(url_for('create_proposal_form'))
+
+@app.after_request
+def set_security_headers(response):
+    """Add security headers to every response.
+
+    These headers defend against clickjacking, MIME-sniffing, XSS reflection,
+    and other common browser-level attacks.
+    """
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=()'
+    # Content-Security-Policy: allow Tailwind CDN but restrict everything else
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "font-src 'self'; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'"
+    )
+    return response
+
 
 @app.template_filter('humanize_date')
 def humanize_date(date_str):
@@ -285,5 +372,6 @@ def urgency_color(urgency):
     return color_map.get(urgency, 'text-gray-600')
 
 if __name__ == '__main__':
-    # Run in development mode
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Debug mode from environment only — never hardcode True in source
+    debug_mode = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes')
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)

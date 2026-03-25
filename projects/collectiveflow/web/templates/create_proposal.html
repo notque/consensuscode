@@ -30,6 +30,7 @@
 
     <!-- Proposal Form -->
     <form method="POST" action="/create" class="space-y-6">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
         <!-- Title -->
         <div class="collective-card">
             <label for="title" class="block text-sm font-medium text-gray-900 mb-1">

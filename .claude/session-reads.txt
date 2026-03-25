@@ -10,3 +10,5 @@
 /Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/pkg/consensus/consensus.go
 /Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/README.md
 /Users/I810033/pgh/consensuscode/.claude/worktrees/agent-af2b96c8/projects/bluesky-collective/Makefile
+/Users/I810033/.claude/hooks/pretool-git-submission-gate.py
+/Users/I810033/pgh/consensuscode/projects/collectiveflow/web/app.py

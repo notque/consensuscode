@@ -669,19 +669,79 @@ def create_proposal():
         flash('Error creating proposal. Please try again.', 'error')
         return redirect(url_for('create_proposal_form'))
 
+@app.route('/proposal/<proposal_id>/consult', methods=['POST'])
+def add_consultation(proposal_id):
+    """Handle consultation input submission for a proposal."""
+    proposal = get_proposal(proposal_id)
+
+    if not proposal:
+        return "Proposal not found", 404
+
+    try:
+        contributor = request.form.get('contributor', '').strip() or 'anonymous'
+        position = request.form.get('position', 'support')
+        comment = request.form.get('comment', '').strip()
+        concerns = request.form.get('concerns', '').strip()
+        suggestions = request.form.get('suggestions', '').strip()
+
+        if not comment:
+            flash('Comment is required — your reasoning matters to the collective.', 'error')
+            return redirect(url_for('proposal_detail', proposal_id=proposal_id) + '#consultation-form')
+
+        if position not in ('support', 'support-with-concerns', 'block'):
+            flash('Invalid position selected.', 'error')
+            return redirect(url_for('proposal_detail', proposal_id=proposal_id) + '#consultation-form')
+
+        consultation = {
+            'contributor': contributor,
+            'position': position,
+            'support': position in ('support', 'support-with-concerns'),
+            'input': comment,
+            'timestamp': datetime.now().isoformat(),
+        }
+
+        if concerns:
+            consultation['concerns'] = [c.strip() for c in concerns.split('\n') if c.strip()]
+        if suggestions:
+            consultation['suggestions'] = [s.strip() for s in suggestions.split('\n') if s.strip()]
+
+        if 'consultations' not in proposal:
+            proposal['consultations'] = []
+        proposal['consultations'].append(consultation)
+
+        if 'consensus_history' not in proposal:
+            proposal['consensus_history'] = []
+        proposal['consensus_history'].append({
+            'timestamp': consultation['timestamp'],
+            'event': 'consultation_added',
+            'actor': contributor,
+            'details': f"Position: {position}"
+        })
+
+        yaml_path = PROPOSALS_DIR / f"{proposal_id}.yaml"
+        with open(yaml_path, 'w') as f:
+            yaml.safe_dump(proposal, f, default_flow_style=False, sort_keys=False)
+
+        json_path = PROPOSALS_DIR / f"{proposal_id}.json"
+        if json_path.exists():
+            with open(json_path, 'w') as f:
+                json.dump(proposal, f, indent=2, default=str)
+
+        flash(f'Consultation input from "{contributor}" recorded. Thank you for participating!', 'success')
+        return redirect(url_for('proposal_detail', proposal_id=proposal_id) + '#consultations-heading')
+
+    except Exception as e:
+        flash(f'Error submitting consultation: {str(e)}', 'error')
+        return redirect(url_for('proposal_detail', proposal_id=proposal_id))
+
 @app.after_request
 def set_security_headers(response):
-    """Add security headers to every response.
-
-    These headers defend against clickjacking, MIME-sniffing, XSS reflection,
-    and other common browser-level attacks.
-    """
+    """Add security headers to every response."""
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=()'
-    # Content-Security-Policy: allow Tailwind CDN but restrict everything else
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "

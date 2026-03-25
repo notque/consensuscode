@@ -133,3 +133,115 @@ These are not bugs but areas to consider as the codebase grows:
 3. **Session refresh** -- The AT Protocol client stores JWT tokens but has no refresh logic. Long-running processes will fail when the access token expires. The `refreshJwt` field is stored but never used.
 
 4. **File I/O and context** -- Several methods accept `context.Context` but cannot pass it to `os.ReadFile`/`os.WriteFile` because Go's file operations do not support cancellation. This is fine, but if the storage layer ever moves to a database or network store, the context plumbing is already in place.
+
+---
+
+## SQLite Patterns for Go (from CollectiveFlow review)
+
+Reviewed by: go-code-quality-specialist
+Date: 2026-03-24
+Scope: `projects/collectiveflow/internal/storage/sqlite.go`
+
+These patterns emerged from reviewing the CollectiveFlow SQLite storage backend. They apply to any Go code using `database/sql` with SQLite (or any SQL driver).
+
+### 1. Never juggle mutex locks to call your own public methods
+
+**The problem:** `ListAll` held `RLock`, collected IDs, then manually called `s.mu.RUnlock()` followed by `defer s.mu.RLock()` so it could call `s.Load()` (which also acquires `RLock`). Similarly, `GenerateID` unlocked, recursed into itself, and deferred a re-lock. Both patterns create windows where another goroutine can acquire a write lock between the manual unlock and the next lock acquisition, leading to stale reads or races.
+
+**The fix:** Extract an unlocked private helper (`loadUnlocked`) that does the real work. The public `Load` method acquires `RLock` and delegates. `ListAll` also acquires `RLock` once and calls `loadUnlocked` directly. For `GenerateID`, replaced the recursive unlock/relock with a simple `for` loop inside a single lock acquisition.
+
+**The lesson:** This is the same pattern from the Bluesky review (section 1 above), now applied to SQL. The rule is universal: if method A holds a lock and needs to do work that method B also does, extract the work into an unlocked helper that both call. Never manually release and re-acquire locks mid-function.
+
+```go
+// BAD: manual unlock/relock to call a locking method
+func (s *Store) ListAll() ([]Item, error) {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+    ids := s.collectIDs()
+    s.mu.RUnlock()       // manual release -- creates a race window
+    defer s.mu.RLock()   // re-acquire later -- confusing and fragile
+    for _, id := range ids {
+        item, _ := s.Load(id) // Load also calls RLock -- works but racy
+    }
+}
+
+// GOOD: unlocked helper, single lock scope
+func (s *Store) loadUnlocked(id string) (Item, error) { /* no locking */ }
+func (s *Store) Load(id string) (Item, error) {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+    return s.loadUnlocked(id)
+}
+func (s *Store) ListAll() ([]Item, error) {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+    ids := s.collectIDs()
+    for _, id := range ids {
+        item, _ := s.loadUnlocked(id) // same lock scope, no juggling
+    }
+}
+```
+
+### 2. Always check `rows.Err()` after a scan loop
+
+**The problem:** The `Load` method queried `consensus_events` and `consultations` with `s.db.Query()`, iterated with `rows.Next()`, but never called `rows.Err()` after the loop. If the iterator encountered an I/O error or connection reset mid-scan, the partial results would be silently returned as if complete.
+
+**The fix:** Added `rows.Err()` checks after every scan loop, returning a `StorageError` if the iterator failed.
+
+**The lesson:** `rows.Next()` returns `false` on both "no more rows" and "error occurred." The only way to distinguish them is `rows.Err()`. This is easy to forget because tests almost never trigger mid-scan errors. Treat it as mandatory boilerplate: every `for rows.Next()` loop must be followed by an `if err := rows.Err()` check.
+
+```go
+for rows.Next() {
+    // scan ...
+}
+// MANDATORY: check for iteration errors
+if err := rows.Err(); err != nil {
+    return nil, fmt.Errorf("iterating rows: %w", err)
+}
+```
+
+### 3. Avoid `SELECT *` -- enumerate columns explicitly
+
+**The problem:** `Load` used `SELECT * FROM proposals WHERE id = ?` and then called `row.Scan()` with positional variables matching the current column order. If anyone adds a column to the schema (or reorders them in a migration), the `Scan` call silently reads the wrong data or panics at runtime.
+
+**The fix:** Changed to `SELECT id, title, description, proposer, created_at, status, urgency, consensus_status, affected_areas FROM proposals WHERE id = ?`. Now the query is self-documenting and immune to schema evolution.
+
+**The lesson:** `SELECT *` is convenient for ad-hoc queries but dangerous in application code. Enumerate columns explicitly. This also makes code reviews easier because you can see exactly which fields are being loaded.
+
+### 4. Wrap Delete in a transaction with audit logging
+
+**The problem:** `Delete` wrote to the `audit_log` table and then deleted from `proposals` as two separate, non-transactional operations. If the process crashed between the audit INSERT and the DELETE, you would have an audit record saying "deleted" but the proposal would still exist. The audit log error was also silently discarded with `_, _ =`.
+
+**The fix:** Wrapped both operations in a single transaction. The audit INSERT error is now checked -- if the audit trail cannot be maintained, the delete fails rather than proceeding silently.
+
+**The lesson:** Any operation that involves multiple related writes should use a transaction. This is especially important for audit logging -- an incomplete audit trail is worse than no audit trail because it creates false confidence.
+
+```go
+// BAD: two unrelated writes, audit error discarded
+_, _ = db.Exec("INSERT INTO audit_log ...")
+db.Exec("DELETE FROM proposals ...")
+
+// GOOD: single transaction, errors checked
+tx, err := db.Begin()
+if err != nil { return err }
+defer tx.Rollback()
+if _, err := tx.Exec("INSERT INTO audit_log ..."); err != nil { return err }
+if _, err := tx.Exec("DELETE FROM proposals ..."); err != nil { return err }
+return tx.Commit()
+```
+
+### 5. Replace recursive mutex juggling with a bounded loop
+
+**The problem:** `GenerateID` incremented a sequence counter, checked the DB for uniqueness, and if the ID already existed, unlocked the mutex, called itself recursively, and deferred a re-lock. This had three issues: (a) unbounded recursion risking stack overflow, (b) the unlock/defer-lock pattern creates race windows, and (c) the deferred `s.mu.Lock()` after the recursive return double-locks the mutex.
+
+**The fix:** Replaced with a simple `for` loop with a bounded attempt count (100), all within a single lock acquisition. If 100 sequential IDs are all taken (extremely unlikely), it returns a clear error instead of stack-overflowing.
+
+**The lesson:** Recursion to retry with a mutex is almost always wrong. Use a loop. Loops are easier to reason about, have clear bounds, keep the lock scope simple, and do not risk stack overflow.
+
+### 6. Surface audit log errors instead of discarding them
+
+**The problem:** In `Save`, the audit log INSERT used `_, _ = tx.Exec(...)`, silently discarding any error. If the audit table had a constraint violation or the disk was full, the caller would never know the audit trail was incomplete.
+
+**The fix:** Changed to check and return the error. Since the audit INSERT is inside the same transaction as the proposal upsert, a failure here correctly rolls back the entire operation.
+
+**The lesson:** The pattern `_, _ = someFunc()` should trigger immediate suspicion in code review. There are legitimate cases (best-effort cleanup), but for anything involving data integrity -- especially audit logging -- the error must be checked.

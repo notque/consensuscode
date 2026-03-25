@@ -282,7 +282,7 @@ func (s *SQLiteStore) Save(p interface{}) error {
 	if err != nil {
 		return &StorageError{Op: "begin transaction", Path: id, Err: err}
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // no-op after successful Commit
 
 	// Upsert proposal
 	_, err = tx.Exec(`
@@ -351,8 +351,8 @@ func (s *SQLiteStore) Save(p interface{}) error {
 				contributor, _ := cm["contributor"].(string)
 				input, _ := cm["input"].(string)
 				support := false
-				if s, ok := cm["support"].(bool); ok {
-					support = s
+				if sv, ok := cm["support"].(bool); ok {
+					support = sv
 				}
 				supportInt := 0
 				if support {
@@ -410,12 +410,15 @@ func (s *SQLiteStore) Save(p interface{}) error {
 		}
 	}
 
-	// Audit log
+	// Audit log -- errors here should not silently vanish; surface them
+	// so the caller knows the audit trail is incomplete.
 	newValues, _ := json.Marshal(map[string]string{"id": id, "title": title})
-	_, _ = tx.Exec(`
+	if _, err := tx.Exec(`
 		INSERT INTO audit_log (table_name, row_id, operation, new_values, actor)
 		VALUES ('proposals', ?, 'INSERT', ?, ?)
-	`, id, string(newValues), proposer)
+	`, id, string(newValues), proposer); err != nil {
+		return &StorageError{Op: "insert audit log", Path: id, Err: err}
+	}
 
 	if err := tx.Commit(); err != nil {
 		return &StorageError{Op: "commit transaction", Path: id, Err: err}
@@ -424,14 +427,15 @@ func (s *SQLiteStore) Save(p interface{}) error {
 	return nil
 }
 
-// Load retrieves a proposal by ID.
-// Returns a map[string]interface{} matching the shape the YAML store returns,
-// so StorageAdapter can unmarshal it identically.
-func (s *SQLiteStore) Load(id string) (interface{}, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	row := s.db.QueryRow("SELECT * FROM proposals WHERE id = ?", id)
+// loadUnlocked retrieves a proposal by ID without acquiring any locks.
+// Callers must hold at least s.mu.RLock.
+func (s *SQLiteStore) loadUnlocked(id string) (interface{}, error) {
+	// Enumerate columns explicitly to avoid breakage if schema changes.
+	row := s.db.QueryRow(`
+		SELECT id, title, description, proposer, created_at,
+		       status, urgency, consensus_status, affected_areas
+		FROM proposals WHERE id = ?
+	`, id)
 
 	var (
 		pID, title, description, proposer, createdAt string
@@ -470,57 +474,13 @@ func (s *SQLiteStore) Load(id string) (interface{}, error) {
 	}
 
 	// Load consensus history
-	eventRows, err := s.db.Query(`
-		SELECT event_type, actor, details, created_at
-		FROM consensus_events
-		WHERE proposal_id = ?
-		ORDER BY created_at ASC, id ASC
-	`, id)
-	if err == nil {
-		defer eventRows.Close()
-		var events []interface{}
-		for eventRows.Next() {
-			var eventType, actor, details, eventTime string
-			if err := eventRows.Scan(&eventType, &actor, &details, &eventTime); err == nil {
-				events = append(events, map[string]interface{}{
-					"timestamp": eventTime,
-					"event":     eventType,
-					"actor":     actor,
-					"details":   details,
-				})
-			}
-		}
-		result["consensus_history"] = events
+	if err := s.loadConsensusHistory(id, result); err != nil {
+		return nil, err
 	}
 
 	// Load consultations
-	consultRows, err := s.db.Query(`
-		SELECT contributor, created_at, input, support, concerns
-		FROM consultations
-		WHERE proposal_id = ?
-		ORDER BY created_at ASC, id ASC
-	`, id)
-	if err == nil {
-		defer consultRows.Close()
-		var consultations []interface{}
-		for consultRows.Next() {
-			var contributor, cTime, inputText, concernsJSON string
-			var supportInt int
-			if err := consultRows.Scan(&contributor, &cTime, &inputText, &supportInt, &concernsJSON); err == nil {
-				c := map[string]interface{}{
-					"contributor": contributor,
-					"timestamp":   cTime,
-					"input":       inputText,
-					"support":     supportInt == 1,
-				}
-				var concerns []interface{}
-				if err := json.Unmarshal([]byte(concernsJSON), &concerns); err == nil && len(concerns) > 0 {
-					c["concerns"] = concerns
-				}
-				consultations = append(consultations, c)
-			}
-		}
-		result["consultations"] = consultations
+	if err := s.loadConsultations(id, result); err != nil {
+		return nil, err
 	}
 
 	// Load decision
@@ -539,6 +499,90 @@ func (s *SQLiteStore) Load(id string) (interface{}, error) {
 	}
 
 	return result, nil
+}
+
+// loadConsensusHistory loads consensus events for a proposal into the result map.
+// Caller must hold at least s.mu.RLock.
+func (s *SQLiteStore) loadConsensusHistory(id string, result map[string]interface{}) error {
+	eventRows, err := s.db.Query(`
+		SELECT event_type, actor, details, created_at
+		FROM consensus_events
+		WHERE proposal_id = ?
+		ORDER BY created_at ASC, id ASC
+	`, id)
+	if err != nil {
+		return &StorageError{Op: "query consensus events", Path: id, Err: err}
+	}
+	defer eventRows.Close()
+
+	var events []interface{}
+	for eventRows.Next() {
+		var eventType, actor, details, eventTime string
+		if err := eventRows.Scan(&eventType, &actor, &details, &eventTime); err != nil {
+			return &StorageError{Op: "scan consensus event", Path: id, Err: err}
+		}
+		events = append(events, map[string]interface{}{
+			"timestamp": eventTime,
+			"event":     eventType,
+			"actor":     actor,
+			"details":   details,
+		})
+	}
+	if err := eventRows.Err(); err != nil {
+		return &StorageError{Op: "iterate consensus events", Path: id, Err: err}
+	}
+	result["consensus_history"] = events
+	return nil
+}
+
+// loadConsultations loads consultation records for a proposal into the result map.
+// Caller must hold at least s.mu.RLock.
+func (s *SQLiteStore) loadConsultations(id string, result map[string]interface{}) error {
+	consultRows, err := s.db.Query(`
+		SELECT contributor, created_at, input, support, concerns
+		FROM consultations
+		WHERE proposal_id = ?
+		ORDER BY created_at ASC, id ASC
+	`, id)
+	if err != nil {
+		return &StorageError{Op: "query consultations", Path: id, Err: err}
+	}
+	defer consultRows.Close()
+
+	var consultations []interface{}
+	for consultRows.Next() {
+		var contributor, cTime, inputText, concernsJSON string
+		var supportInt int
+		if err := consultRows.Scan(&contributor, &cTime, &inputText, &supportInt, &concernsJSON); err != nil {
+			return &StorageError{Op: "scan consultation", Path: id, Err: err}
+		}
+		c := map[string]interface{}{
+			"contributor": contributor,
+			"timestamp":   cTime,
+			"input":       inputText,
+			"support":     supportInt == 1,
+		}
+		var concerns []interface{}
+		if err := json.Unmarshal([]byte(concernsJSON), &concerns); err == nil && len(concerns) > 0 {
+			c["concerns"] = concerns
+		}
+		consultations = append(consultations, c)
+	}
+	if err := consultRows.Err(); err != nil {
+		return &StorageError{Op: "iterate consultations", Path: id, Err: err}
+	}
+	result["consultations"] = consultations
+	return nil
+}
+
+// Load retrieves a proposal by ID.
+// Returns a map[string]interface{} matching the shape the YAML store returns,
+// so StorageAdapter can unmarshal it identically.
+func (s *SQLiteStore) Load(id string) (interface{}, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.loadUnlocked(id)
 }
 
 // ListAll retrieves all proposals, sorted newest-first by created_at.
@@ -564,14 +608,10 @@ func (s *SQLiteStore) ListAll() ([]interface{}, error) {
 		return nil, &StorageError{Op: "list proposals scan", Path: s.path, Err: err}
 	}
 
-	// Load each proposal individually to get full nested data.
-	// We release the read lock and re-acquire per-load because Load also locks.
-	s.mu.RUnlock()
-	defer s.mu.RLock()
-
+	// Load each proposal using the unlocked helper -- we already hold RLock.
 	var proposals []interface{}
 	for _, id := range ids {
-		p, err := s.Load(id)
+		p, err := s.loadUnlocked(id)
 		if err != nil {
 			continue // Skip entries that fail to load
 		}
@@ -586,9 +626,15 @@ func (s *SQLiteStore) Delete(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	tx, err := s.db.Begin()
+	if err != nil {
+		return &StorageError{Op: "begin delete transaction", Path: id, Err: err}
+	}
+	defer tx.Rollback() // no-op after successful Commit
+
 	// Check that the proposal exists first
 	var exists string
-	err := s.db.QueryRow("SELECT id FROM proposals WHERE id = ?", id).Scan(&exists)
+	err = tx.QueryRow("SELECT id FROM proposals WHERE id = ?", id).Scan(&exists)
 	if err == sql.ErrNoRows {
 		return &StorageError{
 			Op:   "delete proposal",
@@ -601,14 +647,20 @@ func (s *SQLiteStore) Delete(id string) error {
 	}
 
 	// Record in audit log before deleting
-	_, _ = s.db.Exec(`
+	if _, err := tx.Exec(`
 		INSERT INTO audit_log (table_name, row_id, operation, actor)
 		VALUES ('proposals', ?, 'DELETE', 'system')
-	`, id)
+	`, id); err != nil {
+		return &StorageError{Op: "insert delete audit log", Path: id, Err: err}
+	}
 
 	// Delete (foreign key cascades handle related rows)
-	if _, err := s.db.Exec("DELETE FROM proposals WHERE id = ?", id); err != nil {
+	if _, err := tx.Exec("DELETE FROM proposals WHERE id = ?", id); err != nil {
 		return &StorageError{Op: "delete proposal", Path: id, Err: err}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return &StorageError{Op: "commit delete transaction", Path: id, Err: err}
 	}
 
 	return nil
@@ -619,21 +671,32 @@ func (s *SQLiteStore) GenerateID() (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.sequence++
 	today := time.Now().Format("2006-01-02")
-	id := fmt.Sprintf("proposal-%s-%03d", today, s.sequence)
 
-	// Verify uniqueness
-	var exists string
-	err := s.db.QueryRow("SELECT id FROM proposals WHERE id = ?", id).Scan(&exists)
-	if err == nil {
-		// ID already exists, try next
-		s.mu.Unlock()
-		defer s.mu.Lock()
-		return s.GenerateID()
+	// Loop instead of recursive call to avoid mutex juggling.
+	// The previous implementation unlocked, recursed (re-locked), and deferred
+	// a re-lock -- a recipe for double-locking or racing with writers.
+	const maxAttempts = 100
+	for range maxAttempts {
+		s.sequence++
+		id := fmt.Sprintf("proposal-%s-%03d", today, s.sequence)
+
+		var exists string
+		err := s.db.QueryRow("SELECT id FROM proposals WHERE id = ?", id).Scan(&exists)
+		if err == sql.ErrNoRows {
+			return id, nil // unique -- use it
+		}
+		if err != nil {
+			// Unexpected DB error
+			return "", &StorageError{Op: "check ID uniqueness", Path: id, Err: err}
+		}
+		// ID exists; loop to try next sequence number
 	}
 
-	return id, nil
+	return "", &StorageError{
+		Op:  "generate ID",
+		Err: fmt.Errorf("exhausted %d attempts to find a unique ID", maxAttempts),
+	}
 }
 
 // GetFilePath returns the database file path for transparency.
